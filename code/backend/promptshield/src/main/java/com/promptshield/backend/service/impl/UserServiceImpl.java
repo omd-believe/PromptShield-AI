@@ -4,6 +4,8 @@ import com.promptshield.backend.dto.request.LoginRequest;
 import com.promptshield.backend.dto.request.RegisterRequest;
 import com.promptshield.backend.dto.response.AuthResponse;
 import com.promptshield.backend.entity.User;
+import com.promptshield.backend.exception.ResourceAlreadyExistsException;
+import com.promptshield.backend.exception.ResourceNotFoundException;
 import com.promptshield.backend.repository.UserRepository;
 import com.promptshield.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,7 @@ public class UserServiceImpl implements UserService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new ResourceAlreadyExistsException("Email already exists");
         }
 
 
@@ -42,13 +44,13 @@ public class UserServiceImpl implements UserService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if(!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword()
         )){
-            throw new RuntimeException("Invalid Credentials");
+            throw new IllegalArgumentException("Invalid credentials");
         }
 
 
