@@ -26,11 +26,20 @@ public class Prompt {
     @Column(columnDefinition = "TEXT")
     private String optimizedPrompt;
 
+    private Integer originalTokens;
+
+    private Integer optimizedTokens;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+
+    private Double reductionPercentage;
+
+    private Boolean sensitiveDataDetected;
 
 }
