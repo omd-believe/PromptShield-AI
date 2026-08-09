@@ -4,6 +4,7 @@ import com.promptshield.backend.dto.request.LoginRequest;
 import com.promptshield.backend.dto.request.RegisterRequest;
 import com.promptshield.backend.dto.response.AuthResponse;
 import com.promptshield.backend.entity.User;
+import com.promptshield.backend.exception.InvalidCredentialsException;
 import com.promptshield.backend.exception.ResourceAlreadyExistsException;
 import com.promptshield.backend.exception.ResourceNotFoundException;
 import com.promptshield.backend.repository.UserRepository;
@@ -50,7 +51,7 @@ public class UserServiceImpl implements UserService {
                 request.getPassword(),
                 user.getPassword()
         )){
-            throw new IllegalArgumentException("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
 

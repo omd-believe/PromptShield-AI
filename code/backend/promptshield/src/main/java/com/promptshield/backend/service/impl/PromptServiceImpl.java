@@ -11,8 +11,6 @@ import com.promptshield.backend.service.PromptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -33,15 +31,15 @@ public class PromptServiceImpl implements PromptService {
         prompt.setOriginalPrompt(request.getPrompt());
         prompt.setOptimizedPrompt("Optimized: " + request.getPrompt());
         prompt.setUser(user);
-        prompt.setCreatedAt(LocalDateTime.now());
+
 
         Prompt savedPrompt = promptRepository.save(prompt);
 
 
         return new PromptResponse(
                 savedPrompt.getPromptId(),
+                savedPrompt.getOriginalPrompt(),
                 savedPrompt.getOptimizedPrompt(),
-                "optimized prompt",
                 savedPrompt.getCreatedAt()
         );
     }
