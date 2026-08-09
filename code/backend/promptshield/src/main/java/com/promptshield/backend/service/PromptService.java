@@ -7,11 +7,9 @@ import java.util.List;
 public interface PromptService {
 
 
-    PromptResponse optimizePrompt(PromptRequest request);
+    PromptResponse optimizePrompt(String email, PromptRequest request);
 
-    List<PromptResponse> getPromptHistory(Long userId);
+    List<PromptResponse> getPromptHistory(String email);
 
-    PromptResponse getPrompt(Long promptId);
-
-    void deletePrompt(Long promptId);
+    void deletePrompt(String email, Long promptId);
 }

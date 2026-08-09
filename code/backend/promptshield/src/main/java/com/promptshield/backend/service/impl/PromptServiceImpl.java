@@ -21,20 +21,26 @@ public class PromptServiceImpl implements PromptService {
     private final UserRepository userRepository;
 
     @Override
-    public PromptResponse optimizePrompt(PromptRequest request){
+    public PromptResponse optimizePrompt(
+            String email,
+            PromptRequest request) {
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
 
-        Prompt prompt =  new Prompt();
+        Prompt prompt = new Prompt();
 
         prompt.setOriginalPrompt(request.getPrompt());
-        prompt.setOptimizedPrompt("Optimized: " + request.getPrompt());
+
+        // Temporary optimization logic
+        prompt.setOptimizedPrompt(
+                "Optimized: " + request.getPrompt()
+        );
+
         prompt.setUser(user);
 
-
         Prompt savedPrompt = promptRepository.save(prompt);
-
 
         return new PromptResponse(
                 savedPrompt.getPromptId(),
@@ -45,47 +51,39 @@ public class PromptServiceImpl implements PromptService {
     }
 
     @Override
-    public List<PromptResponse> getPromptHistory(Long userId){
+    public List<PromptResponse> getPromptHistory(String email) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        List<Prompt> prompts =  promptRepository.findByUserOrderByCreatedAtDesc(user);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
 
-        List<PromptResponse> responses = prompts.stream()
-                .map((p) -> new PromptResponse(p.getPromptId(),
+        List<Prompt> prompts =
+                promptRepository.findByUserOrderByCreatedAtDesc(user);
+
+        return prompts.stream()
+                .map(p -> new PromptResponse(
+                        p.getPromptId(),
                         p.getOriginalPrompt(),
                         p.getOptimizedPrompt(),
                         p.getCreatedAt()
-                        ))
+                ))
                 .toList();
-
-        return responses;
     }
 
-    @Override
-    public PromptResponse getPrompt(Long promptId){
-
-        Prompt p = promptRepository.findById(promptId)
-                .orElseThrow(() -> new ResourceNotFoundException("Prompt not found"));
-
-
-        return new PromptResponse(
-                p.getPromptId(),
-                p.getOriginalPrompt(),
-                p.getOptimizedPrompt(),
-                p.getCreatedAt()
-        );
-
-    }
 
     @Override
-    public void deletePrompt(Long promptId){
+    public void deletePrompt(String email, Long promptId) {
 
-        if(!promptRepository.existsById(promptId)){
-            throw new ResourceNotFoundException("Prompt not found");
-        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
 
-        promptRepository.deleteById(promptId);
+        Prompt prompt = promptRepository
+                .findByPromptIdAndUser(promptId, user)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Prompt not found"));
+
+        promptRepository.delete(prompt);
     }
 
 

@@ -7,6 +7,8 @@ import com.promptshield.backend.service.PromptService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,30 +22,38 @@ public class PromptController {
 
     @PostMapping
     public ResponseEntity<PromptResponse> optimizePrompt(
-            @Valid @RequestBody PromptRequest request) {
+            @Valid @RequestBody PromptRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
 
-        return ResponseEntity.ok(promptService.optimizePrompt(request));
+        String email = jwt.getSubject();
+
+        return ResponseEntity.ok(
+                promptService.optimizePrompt(email, request)
+        );
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/user")
     public ResponseEntity<List<PromptResponse>> getPromptHistory(
-            @PathVariable Long userId) {
+            @AuthenticationPrincipal Jwt jwt) {
 
-        return ResponseEntity.ok(promptService.getPromptHistory(userId));
+        String email = jwt.getSubject();
+
+        return ResponseEntity.ok(
+                promptService.getPromptHistory(email)
+        );
     }
 
-    @GetMapping("/{promptId}")
-    public ResponseEntity<PromptResponse> getPrompt(@PathVariable Long promptId){
-        return ResponseEntity.ok(promptService.getPrompt(promptId));
-    }
 
     @DeleteMapping("/{promptId}")
     public ResponseEntity<Void> deletePrompt(
-            @PathVariable Long promptId) {
+            @PathVariable Long promptId,
+            @AuthenticationPrincipal Jwt jwt) {
 
-        promptService.deletePrompt(promptId);
+        String email = jwt.getSubject();
+
+        promptService.deletePrompt(email, promptId);
+
         return ResponseEntity.noContent().build();
     }
-
 
 }

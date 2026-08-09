@@ -8,6 +8,7 @@ import com.promptshield.backend.exception.InvalidCredentialsException;
 import com.promptshield.backend.exception.ResourceAlreadyExistsException;
 import com.promptshield.backend.exception.ResourceNotFoundException;
 import com.promptshield.backend.repository.UserRepository;
+import com.promptshield.backend.service.JwtService;
 import com.promptshield.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,6 +21,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
 
     public AuthResponse register(RegisterRequest request) {
@@ -54,10 +56,11 @@ public class UserServiceImpl implements UserService {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
+        String token = jwtService.generateToken(user.getEmail());
 
         return new AuthResponse(
                 "Login Successful",
-                user.getEmail()
+                token
         );
 
 
