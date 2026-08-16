@@ -1,34 +1,87 @@
-HELP.md
+# =========================
+# Maven
+# =========================
 target/
 .mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Keep Maven wrapper configuration
+!.mvn/wrapper/maven-wrapper.properties
 
-### IntelliJ IDEA ###
-.idea
+
+# =========================
+# Spring Boot
+# =========================
+*.log
+logs/
+
+# Local environment/config files
+.env
+.env.*
+!.env.example
+
+
+# =========================
+# IntelliJ IDEA
+# =========================
+.idea/
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+
+# =========================
+# Eclipse / STS
+# =========================
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache
+.apt_generated
+
+
+# =========================
+# NetBeans
+# =========================
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+
+# =========================
+# VS Code
+# =========================
 .vscode/
-*application.properties
+
+
+# =========================
+# Gradle
+# =========================
+.gradle/
+build/
+
+
+# =========================
+# OS generated files
+# =========================
+.DS_Store
+Thumbs.db
+
+
+# =========================
+# Docker
+# =========================
+*.pid
+
+
+# =========================
+# Temporary / backup files
+# =========================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
