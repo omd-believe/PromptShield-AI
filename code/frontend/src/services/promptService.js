@@ -3,63 +3,77 @@ import api from './api';
 /**
  * Prompt Service — aligned with Spring Boot endpoints:
  *
- * POST /api/prompt/optimize
- *   Body: { "promptText": "..." }
+ * POST /api/v1/prompts
+ *   Body: { "prompt": "..." }
  *   Response: {
  *     promptId: Long,
- *     originalText: String,
- *     optimizedText: String,
- *     similarityScore: Double,      // 0.0 – 1.0
- *     originalTokenCount: Int,
- *     optimizedTokenCount: Int,
- *     tokenReduction: Int,
- *     tokenReductionPercent: Double,
- *     privacyReport: [
- *       { type: String, value: String, masked: String }
- *     ],
+ *     originalPrompt: String,
+ *     optimizedPrompt: String,
  *     createdAt: String             // ISO 8601
  *   }
  *
- * GET /api/prompt/history?page=0&size=10
- *   Response: {
- *     content: [...],
- *     totalPages: Int,
- *     totalElements: Int,
- *     number: Int
- *   }
+ * GET /api/v1/prompts/user
+ *   Response: [ { promptId, originalPrompt, optimizedPrompt, createdAt }, ... ]
  *
- * GET /api/prompt/stats
- *   Response: {
- *     totalPrompts: Int,
- *     avgTokenReduction: Double,
- *     totalPrivacyFlags: Int,
- *     avgSimilarityScore: Double
- *   }
+ * DELETE /api/v1/prompts/{id}
+ *   Response: 204 No Content
  */
 
 /**
- * Optimize a prompt through the full AI pipeline.
+ * Optimize a prompt through the AI pipeline.
  * @param {string} promptText
  */
 export const optimizePrompt = async (promptText) => {
-  const response = await api.post('/prompt/optimize', { promptText });
-  return response.data;
+  // Backend PromptRequest field name is "prompt" (not "promptText")
+  const response = await api.post('/prompts', { prompt: promptText });
+  return response.data; // { promptId, originalPrompt, optimizedPrompt, createdAt }
 };
 
 /**
- * Fetch paginated prompt history for the logged-in user.
- * @param {number} page - zero-based page index
- * @param {number} size - items per page
+ * Fetch all prompts for the logged-in user (ordered by newest first).
+ * Backend returns a plain List, not a paginated object.
  */
-export const getHistory = async (page = 0, size = 10) => {
-  const response = await api.get('/prompt/history', { params: { page, size } });
-  return response.data; // { content, totalPages, totalElements, number }
+export const getHistory = async () => {
+  const response = await api.get('/prompts/user');
+  // Wrap in a { content: [...] } shape so Dashboard.jsx works without changes
+  const list = Array.isArray(response.data) ? response.data : [];
+  return { content: list, totalElements: list.length };
 };
 
 /**
- * Fetch dashboard stats for the logged-in user.
+ * Derive dashboard stats from the user's prompt history.
+ * The backend has no dedicated /stats endpoint — we compute from history.
+ * @returns {{ totalPrompts, avgTokenReduction, totalPrivacyFlags, avgSimilarityScore }}
  */
 export const getDashboardStats = async () => {
-  const response = await api.get('/prompt/stats');
-  return response.data; // { totalPrompts, avgTokenReduction, totalPrivacyFlags, avgSimilarityScore }
+  const response = await api.get('/prompts/user');
+  const list = Array.isArray(response.data) ? response.data : [];
+
+  const totalPrompts = list.length;
+
+  // Backend PromptResponse fields: originalPrompt, optimizedPrompt
+  // Token count approximation: word count × 1.33
+  const approxTokens = (text = '') => Math.ceil((text.trim().split(/\s+/).length) * 1.33);
+
+  let totalReduction = 0;
+  list.forEach((p) => {
+    const orig = approxTokens(p.originalPrompt);
+    const opt = approxTokens(p.optimizedPrompt);
+    if (orig > 0) totalReduction += ((orig - opt) / orig) * 100;
+  });
+
+  return {
+    totalPrompts,
+    avgTokenReduction: totalPrompts > 0 ? totalReduction / totalPrompts : 0,
+    totalPrivacyFlags: 0,   // backend doesn't expose this yet
+    avgSimilarityScore: 0,  // backend doesn't expose this yet
+  };
+};
+
+/**
+ * Delete a prompt by ID.
+ * @param {number} promptId
+ */
+export const deletePrompt = async (promptId) => {
+  await api.delete(`/prompts/${promptId}`);
 };

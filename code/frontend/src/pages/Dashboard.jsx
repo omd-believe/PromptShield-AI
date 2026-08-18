@@ -103,8 +103,9 @@ export default function Dashboard() {
 
   /* ─── Copy optimized text ─── */
   const handleCopy = () => {
-    if (!quickResult?.optimizedText) return;
-    navigator.clipboard.writeText(quickResult.optimizedText);
+    // Backend field: optimizedPrompt
+    if (!quickResult?.optimizedPrompt) return;
+    navigator.clipboard.writeText(quickResult.optimizedPrompt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -321,35 +322,7 @@ export default function Dashboard() {
             {/* ── Quick Result ── */}
             {quickResult && (
               <div className="quick-result">
-                {/* Stats row */}
-                <div className="quick-result__stats">
-                  <div className="quick-result__stat">
-                    <span className="quick-result__stat-val gradient-text">
-                      {Math.round((quickResult.tokenReductionPercent ?? 0) * 10) / 10}%
-                    </span>
-                    <span className="quick-result__stat-label">Tokens Saved</span>
-                  </div>
-                  <div className="quick-result__stat">
-                    <span className="quick-result__stat-val" style={{ color: '#00d4aa' }}>
-                      {fmt(quickResult.similarityScore, 2)}
-                    </span>
-                    <span className="quick-result__stat-label">Similarity Score</span>
-                  </div>
-                  <div className="quick-result__stat">
-                    <span className="quick-result__stat-val" style={{ color: '#ff4d6d' }}>
-                      {quickResult.privacyReport?.length ?? 0}
-                    </span>
-                    <span className="quick-result__stat-label">Privacy Flags</span>
-                  </div>
-                  <div className="quick-result__stat">
-                    <span className="quick-result__stat-val" style={{ color: '#f59e0b' }}>
-                      {quickResult.originalTokenCount} → {quickResult.optimizedTokenCount}
-                    </span>
-                    <span className="quick-result__stat-label">Tokens</span>
-                  </div>
-                </div>
-
-                {/* Optimized text */}
+                {/* Optimized text — backend field: optimizedPrompt */}
                 <div className="quick-result__text-wrap">
                   <div className="quick-result__text-header">
                     <span className="quick-result__text-label">
@@ -365,25 +338,8 @@ export default function Dashboard() {
                       {copied ? 'Copied!' : 'Copy'}
                     </button>
                   </div>
-                  <p className="quick-result__text">{quickResult.optimizedText}</p>
+                  <p className="quick-result__text">{quickResult.optimizedPrompt}</p>
                 </div>
-
-                {/* Privacy report (if any) */}
-                {quickResult.privacyReport?.length > 0 && (
-                  <div className="quick-result__privacy">
-                    <p className="quick-result__privacy-title">
-                      <Shield size={13} /> Masked Sensitive Data
-                    </p>
-                    <div className="quick-result__privacy-tags">
-                      {quickResult.privacyReport.map((item, i) => (
-                        <span key={i} className="privacy-flag-tag">
-                          <span className="privacy-flag-tag__type">{item.type}</span>
-                          <span className="privacy-flag-tag__value">{item.masked}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <Link to="/optimize" className="quick-result__full-link">
                   View full analysis <ArrowRight size={13} />
@@ -427,25 +383,20 @@ export default function Dashboard() {
                   <div className="activity-item__left">
                     <div className="activity-item__index">{i + 1}</div>
                     <div className="activity-item__content">
+                      {/* Backend fields: originalPrompt / optimizedPrompt */}
                       <p className="activity-item__original">
-                        {item.originalText?.length > 80
-                          ? item.originalText.slice(0, 80) + '…'
-                          : item.originalText}
+                        {item.originalPrompt?.length > 80
+                          ? item.originalPrompt.slice(0, 80) + '…'
+                          : item.originalPrompt}
                       </p>
                       <p className="activity-item__optimized">
-                        {item.optimizedText?.length > 80
-                          ? item.optimizedText.slice(0, 80) + '…'
-                          : item.optimizedText}
+                        {item.optimizedPrompt?.length > 80
+                          ? item.optimizedPrompt.slice(0, 80) + '…'
+                          : item.optimizedPrompt}
                       </p>
                     </div>
                   </div>
                   <div className="activity-item__right">
-                    <span className="activity-badge activity-badge--green">
-                      {fmt(item.similarityScore, 2)}
-                    </span>
-                    <span className="activity-badge activity-badge--accent">
-                      -{Math.round(item.tokenReductionPercent ?? 0)}%
-                    </span>
                     <span className="activity-time">{timeAgo(item.createdAt)}</span>
                   </div>
                 </div>

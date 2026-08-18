@@ -1,44 +1,52 @@
 import api from './api';
 
-export const DEMO_USER = {
-  token: 'demo-jwt-token-xyz-12345',
-  user: {
-    userId: 999,
-    name: 'Testing Account (Demo)',
-    email: 'demo@promptshield.ai',
-  },
+/**
+ * Decode the payload from a JWT token (base64url → JSON).
+ * Used to extract email/subject since backend AuthResponse only returns { message, token }.
+ */
+const decodeJwtPayload = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  } catch {
+    return {};
+  }
 };
 
+/**
+ * Build a minimal user object from the JWT payload.
+ * Backend sets the JWT subject to the user's email (see JwtService.generateToken).
+ */
+const userFromToken = (token, name = '') => {
+  const payload = decodeJwtPayload(token);
+  return {
+    email: payload.sub || '',
+    name: name || payload.sub?.split('@')[0] || 'User',
+  };
+};
+
+/**
+ * POST /api/v1/register
+ * Body:     { name, email, password }
+ * Response: { message, token }
+ */
 export const register = async (name, email, password) => {
-  try {
-    const response = await api.post('/auth/register', { name, email, password });
-    return response.data;
-  } catch (err) {
-    if (!err.response) {
-      console.warn('Backend offline — providing demo testing registration.');
-      return {
-        token: DEMO_USER.token,
-        user: { userId: Date.now(), name, email },
-      };
-    }
-    throw err;
-  }
+  const response = await api.post('/register', { name, email, password });
+  const { token } = response.data;
+  return { token, user: userFromToken(token, name) };
 };
 
+/**
+ * POST /api/v1/login
+ * Body:     { email, password }
+ * Response: { message, token }
+ */
 export const login = async (email, password) => {
-  try {
-    const response = await api.post('/auth/login', { email, password });
-    return response.data;
-  } catch (err) {
-    if (!err.response || email === DEMO_USER.user.email) {
-      console.warn('Backend offline or Demo login requested — returning demo user.');
-      return DEMO_USER;
-    }
-    throw err;
-  }
+  const response = await api.post('/login', { email, password });
+  const { token } = response.data;
+  return { token, user: userFromToken(token) };
 };
-
-export const loginAsDemoUser = () => DEMO_USER;
 
 export const logout = () => {
   localStorage.removeItem('ps_token');

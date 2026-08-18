@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Sparkles, Zap } from 'lucide-react';
-import { login, DEMO_USER } from '../services/authService';
+import { Shield, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { login } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import './Auth.css';
 
@@ -60,12 +60,6 @@ export default function Login() {
     }
   };
 
-  /* ── Quick Test Login ── */
-  const handleQuickDemoLogin = () => {
-    setForm({ email: DEMO_USER.user.email, password: 'DemoUser123!' });
-    setAuth(DEMO_USER.token, DEMO_USER.user);
-    navigate('/dashboard');
-  };
 
   return (
     <div className="auth-page">
@@ -91,23 +85,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* ── Quick Test User Banner ── */}
-          <div className="auth-demo-banner">
-            <div className="auth-demo-banner__info">
-              <Sparkles size={16} className="auth-demo-banner__icon" />
-              <div>
-                <strong>Testing / Evaluation Mode</strong>
-                <p>Click below to log in instantly with a test user.</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="auth-demo-btn"
-              onClick={handleQuickDemoLogin}
-            >
-              <Zap size={14} /> Log in as Demo User
-            </button>
-          </div>
 
           {/* ── API Error Banner ── */}
           {apiError && (

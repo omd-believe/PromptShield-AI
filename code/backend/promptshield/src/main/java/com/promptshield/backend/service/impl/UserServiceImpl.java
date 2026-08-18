@@ -30,7 +30,6 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException("Email already exists");
         }
 
-
         User newUser = new User();
         newUser.setName(request.getName());
         newUser.setEmail(request.getEmail());
@@ -38,9 +37,12 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(newUser);
 
+        // Generate a real JWT so the user is immediately authenticated after registering
+        String token = jwtService.generateToken(newUser.getEmail());
+
         return new AuthResponse(
                 "Registration Successful",
-                newUser.getEmail()
+                token
         );
     }
 

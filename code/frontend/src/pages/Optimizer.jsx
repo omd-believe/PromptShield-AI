@@ -116,8 +116,9 @@ export default function Optimizer() {
   };
 
   const handleCopy = () => {
-    if (!result?.optimizedText) return;
-    navigator.clipboard.writeText(result.optimizedText);
+    // Backend field: optimizedPrompt
+    if (!result?.optimizedPrompt) return;
+    navigator.clipboard.writeText(result.optimizedPrompt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -288,36 +289,41 @@ export default function Optimizer() {
         {result && (
           <div className="opt-results" ref={resultRef}>
 
-            {/* ── Quick Metrics Bar ── */}
-            <div className="opt-metrics">
-              <div className="opt-metric">
-                <span className="opt-metric__val gradient-text">
-                  {fmt(result.tokenReductionPercent, 1)}%
-                </span>
-                <span className="opt-metric__label">Tokens Saved</span>
-              </div>
-              <div className="opt-metric-divider" />
-              <div className="opt-metric">
-                <span className="opt-metric__val" style={{ color: '#00d4aa' }}>
-                  {fmt(result.similarityScore, 3)}
-                </span>
-                <span className="opt-metric__label">Similarity Score</span>
-              </div>
-              <div className="opt-metric-divider" />
-              <div className="opt-metric">
-                <span className="opt-metric__val" style={{ color: '#ff4d6d' }}>
-                  {result.privacyReport?.length ?? 0}
-                </span>
-                <span className="opt-metric__label">Privacy Flags</span>
-              </div>
-              <div className="opt-metric-divider" />
-              <div className="opt-metric">
-                <span className="opt-metric__val" style={{ color: '#f59e0b' }}>
-                  {result.originalTokenCount} → {result.optimizedTokenCount}
-                </span>
-                <span className="opt-metric__label">Token Count</span>
-              </div>
-            </div>
+            {/* ── Quick Metrics Bar — computed from backend fields ── */}
+            {(() => {
+              const origWords = result.originalPrompt?.trim().split(/\s+/).length ?? 0;
+              const optWords  = result.optimizedPrompt?.trim().split(/\s+/).length ?? 0;
+              const origTok   = Math.ceil(origWords * 1.33);
+              const optTok    = Math.ceil(optWords  * 1.33);
+              const pct       = origTok > 0 ? ((origTok - optTok) / origTok * 100) : 0;
+              return (
+                <div className="opt-metrics">
+                  <div className="opt-metric">
+                    <span className="opt-metric__val gradient-text">
+                      {pct > 0 ? fmt(pct, 1) + '%' : '—'}
+                    </span>
+                    <span className="opt-metric__label">Tokens Saved</span>
+                  </div>
+                  <div className="opt-metric-divider" />
+                  <div className="opt-metric">
+                    <span className="opt-metric__val" style={{ color: '#00d4aa' }}>N/A</span>
+                    <span className="opt-metric__label">Similarity Score</span>
+                  </div>
+                  <div className="opt-metric-divider" />
+                  <div className="opt-metric">
+                    <span className="opt-metric__val" style={{ color: '#ff4d6d' }}>N/A</span>
+                    <span className="opt-metric__label">Privacy Flags</span>
+                  </div>
+                  <div className="opt-metric-divider" />
+                  <div className="opt-metric">
+                    <span className="opt-metric__val" style={{ color: '#f59e0b' }}>
+                      {origTok} → {optTok}
+                    </span>
+                    <span className="opt-metric__label">Token Count (est.)</span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* ── Tabs ── */}
             <div className="opt-tabs">
@@ -338,40 +344,37 @@ export default function Optimizer() {
             {/* ── Tab: Optimized Prompt ── */}
             {activeTab === 0 && (
               <div className="opt-tab-content">
-                {/* Side by side comparison */}
-                <div className="opt-compare">
-                  {/* Original */}
-                  <div className="opt-compare__pane opt-compare__pane--original">
-                    <div className="opt-compare__pane-header">
-                      <span><span className="dot dot--red" /> Original</span>
-                      <span className="opt-compare__token-count">
-                        {result.originalTokenCount} tokens
-                      </span>
+                {/* Side by side comparison — backend fields: originalPrompt / optimizedPrompt */}
+                {(() => {
+                  const origTok = Math.ceil((result.originalPrompt?.trim().split(/\s+/).length ?? 0) * 1.33);
+                  const optTok  = Math.ceil((result.optimizedPrompt?.trim().split(/\s+/).length ?? 0) * 1.33);
+                  const pct     = origTok > 0 ? Math.round((origTok - optTok) / origTok * 100) : 0;
+                  return (
+                    <div className="opt-compare">
+                      <div className="opt-compare__pane opt-compare__pane--original">
+                        <div className="opt-compare__pane-header">
+                          <span><span className="dot dot--red" /> Original</span>
+                          <span className="opt-compare__token-count">~{origTok} tokens</span>
+                        </div>
+                        <p className="opt-compare__text">{result.originalPrompt}</p>
+                      </div>
+
+                      <div className="opt-compare__arrow">
+                        <ArrowRight size={20} className="opt-compare__arrow-icon" />
+                        {pct > 0 && <span className="opt-compare__reduction">-{pct}%</span>}
+                      </div>
+
+                      <div className="opt-compare__pane opt-compare__pane--optimized">
+                        <div className="opt-compare__pane-header">
+                          <span><span className="dot dot--green" /> Optimized</span>
+                          <span className="opt-compare__token-count">~{optTok} tokens</span>
+                        </div>
+                        <p className="opt-compare__text">{result.optimizedPrompt}</p>
+                      </div>
                     </div>
-                    <p className="opt-compare__text">{result.originalText}</p>
-                  </div>
+                  );
+                })()}
 
-                  {/* Arrow */}
-                  <div className="opt-compare__arrow">
-                    <ArrowRight size={20} className="opt-compare__arrow-icon" />
-                    <span className="opt-compare__reduction">
-                      -{Math.round(result.tokenReductionPercent ?? 0)}%
-                    </span>
-                  </div>
-
-                  {/* Optimized */}
-                  <div className="opt-compare__pane opt-compare__pane--optimized">
-                    <div className="opt-compare__pane-header">
-                      <span><span className="dot dot--green" /> Optimized</span>
-                      <span className="opt-compare__token-count">
-                        {result.optimizedTokenCount} tokens
-                      </span>
-                    </div>
-                    <p className="opt-compare__text">{result.optimizedText}</p>
-                  </div>
-                </div>
-
-                {/* Copy button */}
                 <button className="opt-copy-btn" onClick={handleCopy}>
                   {copied ? <><CheckCheck size={16} /> Copied!</> : <><Copy size={16} /> Copy Optimized Prompt</>}
                 </button>
@@ -436,87 +439,61 @@ export default function Optimizer() {
               </div>
             )}
 
-            {/* ── Tab: Statistics ── */}
-            {activeTab === 2 && (
-              <div className="opt-tab-content">
-                <div className="opt-stats-grid">
-                  {/* Token stats */}
-                  <div className="opt-stat-card">
-                    <div className="opt-stat-card__label">Original Token Count</div>
-                    <div className="opt-stat-card__val">{result.originalTokenCount ?? '—'}</div>
-                  </div>
-                  <div className="opt-stat-card">
-                    <div className="opt-stat-card__label">Optimized Token Count</div>
-                    <div className="opt-stat-card__val" style={{ color: '#00d4aa' }}>
-                      {result.optimizedTokenCount ?? '—'}
+            {/* ── Tab: Statistics — computed from available backend fields ── */}
+            {activeTab === 2 && (() => {
+              const origTok = Math.ceil((result.originalPrompt?.trim().split(/\s+/).length ?? 0) * 1.33);
+              const optTok  = Math.ceil((result.optimizedPrompt?.trim().split(/\s+/).length ?? 0) * 1.33);
+              const saved   = origTok - optTok;
+              const pct     = origTok > 0 ? (saved / origTok * 100) : 0;
+              return (
+                <div className="opt-tab-content">
+                  <div className="opt-stats-grid">
+                    <div className="opt-stat-card">
+                      <div className="opt-stat-card__label">Original Token Count (est.)</div>
+                      <div className="opt-stat-card__val">{origTok}</div>
                     </div>
-                  </div>
-                  <div className="opt-stat-card">
-                    <div className="opt-stat-card__label">Tokens Saved</div>
-                    <div className="opt-stat-card__val" style={{ color: '#6c63ff' }}>
-                      {result.tokenReduction ?? '—'}
+                    <div className="opt-stat-card">
+                      <div className="opt-stat-card__label">Optimized Token Count (est.)</div>
+                      <div className="opt-stat-card__val" style={{ color: '#00d4aa' }}>{optTok}</div>
                     </div>
-                  </div>
-                  <div className="opt-stat-card">
-                    <div className="opt-stat-card__label">Token Reduction %</div>
-                    <div className="opt-stat-card__val gradient-text">
-                      {fmt(result.tokenReductionPercent, 1)}%
+                    <div className="opt-stat-card">
+                      <div className="opt-stat-card__label">Tokens Saved (est.)</div>
+                      <div className="opt-stat-card__val" style={{ color: '#6c63ff' }}>{Math.max(0, saved)}</div>
                     </div>
-                  </div>
+                    <div className="opt-stat-card">
+                      <div className="opt-stat-card__label">Token Reduction % (est.)</div>
+                      <div className="opt-stat-card__val gradient-text">{pct > 0 ? fmt(pct, 1) + '%' : '—'}</div>
+                    </div>
 
-                  {/* Similarity */}
-                  <div className="opt-stat-card opt-stat-card--wide">
-                    <div className="opt-stat-card__label">
-                      <Target size={13} /> Semantic Similarity Score
-                    </div>
-                    <div className="opt-stat-card__val" style={{ color: '#00d4aa' }}>
-                      {fmt(result.similarityScore, 4)}
-                      <span className="opt-stat-card__sub">/ 1.0000</span>
-                    </div>
-                    {/* Similarity visual bar */}
-                    <div className="opt-similarity-bar">
-                      <div
-                        className="opt-similarity-bar__fill"
-                        style={{ width: `${(result.similarityScore ?? 0) * 100}%` }}
-                      />
-                    </div>
-                    <p className="opt-stat-card__desc">
-                      Measures how much semantic meaning is preserved after optimization.
-                      A score above 0.85 is considered excellent.
-                    </p>
-                  </div>
-
-                  {/* Privacy summary */}
-                  <div className="opt-stat-card opt-stat-card--wide">
-                    <div className="opt-stat-card__label">
-                      <Shield size={13} /> Privacy Report Summary
-                    </div>
-                    <div className="opt-stat-card__val" style={{ color: '#ff4d6d' }}>
-                      {result.privacyReport?.length ?? 0}
-                      <span className="opt-stat-card__sub"> items masked</span>
-                    </div>
-                    {result.privacyReport?.length > 0 && (
-                      <div className="opt-stat-type-breakdown">
-                        {Object.entries(
-                          result.privacyReport.reduce((acc, item) => {
-                            acc[item.type] = (acc[item.type] || 0) + 1;
-                            return acc;
-                          }, {})
-                        ).map(([type, count]) => (
-                          <span
-                            key={type}
-                            className="opt-stat-type-tag"
-                            style={{ background: `${typeColor(type)}15`, color: typeColor(type), border: `1px solid ${typeColor(type)}30` }}
-                          >
-                            {type} × {count}
-                          </span>
-                        ))}
+                    <div className="opt-stat-card opt-stat-card--wide">
+                      <div className="opt-stat-card__label">
+                        <Target size={13} /> Semantic Similarity Score
                       </div>
-                    )}
+                      <div className="opt-stat-card__val" style={{ color: '#00d4aa' }}>
+                        N/A
+                        <span className="opt-stat-card__sub"> — requires AI service</span>
+                      </div>
+                      <p className="opt-stat-card__desc">
+                        Semantic similarity scoring will be available once the AI pipeline service is connected.
+                      </p>
+                    </div>
+
+                    <div className="opt-stat-card opt-stat-card--wide">
+                      <div className="opt-stat-card__label">
+                        <Shield size={13} /> Privacy Report Summary
+                      </div>
+                      <div className="opt-stat-card__val" style={{ color: '#ff4d6d' }}>
+                        N/A
+                        <span className="opt-stat-card__sub"> — requires AI service</span>
+                      </div>
+                      <p className="opt-stat-card__desc">
+                        Privacy detection (PII masking) will be available once the AI pipeline service is connected.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
           </div>
         )}

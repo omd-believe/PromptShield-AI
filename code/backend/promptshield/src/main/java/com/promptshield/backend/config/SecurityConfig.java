@@ -6,6 +6,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 public class SecurityConfig {
 
@@ -14,6 +16,11 @@ public class SecurityConfig {
             throws Exception {
 
         http
+                // Enable CORS using the CorsConfig bean — must be here so Spring
+                // Security also applies CORS headers to error responses (4xx/5xx).
+                // Without this, the browser can't read 409 / 401 error bodies.
+                .cors(withDefaults())
+
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
