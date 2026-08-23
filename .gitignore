@@ -1,134 +1,54 @@
-# ===========================
-# Java
-# ===========================
-*.class
-*.log
-*.ctxt
-*.jar
-*.war
-*.ear
-hs_err_pid*
-replay_pid*
+# =========================
+# Python
+# =========================
 
-# ===========================
-# Maven
-# ===========================
-target/
-!.mvn/wrapper/maven-wrapper.jar
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+ai-service/venv/
 
-# ===========================
-# Gradle
-# ===========================
-.gradle/
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python build files
 build/
-out/
+dist/
+*.egg-info/
 
-# ===========================
-# IntelliJ IDEA
-# ===========================
-.idea/
-*.iml
+# =========================
+# Environment variables
+# =========================
 
-# ===========================
-# Eclipse
-# ===========================
-.project
-.classpath
-.settings/
-.factorypath
-
-# ===========================
-# VS Code
-# ===========================
-.vscode/
-
-# ===========================
-# OS Files
-# ===========================
-.DS_Store
-Thumbs.db
-
-# ===========================
-# Logs
-# ===========================
-logs/
-*.log
-
-# ===========================
-# Environment Files
-# ===========================
 .env
 .env.*
 !.env.example
 
-# ===========================
-# Application Secrets
-# ===========================
-application-local.yml
-application-local.yaml
-application-local.properties
+# =========================
+# Jupyter
+# =========================
 
-# ===========================
-# Temporary Files
-# ===========================
-*.tmp
-*.swp
-*.swo
+.ipynb_checkpoints/
 
-# ===========================
-# Coverage & Reports
-# ===========================
-coverage/
-jacoco.exec
+# =========================
+# IDE / Editor
+# =========================
 
-# ===========================
-# Docker
-# ===========================
-docker-compose.override.yml
+.vscode/
+.idea/
 
-# ===========================
-# Node (Future React App)
-# ===========================
-node_modules/
+# =========================
+# OS generated files
+# =========================
 
-# ===========================
-# Python (Future AI Service)
-# ===========================
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.env.python
+.DS_Store
+Thumbs.db
 
-# ===========================
-# Model Files
-# ===========================
-*.pt
-*.pth
-*.ckpt
-*.onnx
+# =========================
+# Logs
+# =========================
 
-# ===========================
-# Dataset Files (Large)
-# ===========================
-datasets/raw/
-datasets/cache/
-
-# Keep dataset structure
-!datasets/.gitkeep
-
-# ===========================
-# Uploads
-# ===========================
-uploads/
-
-# ===========================
-# Generated Files
-# ===========================
-generated/
-
-# ===========================
-# Misc
-# ===========================
-*.bak
-*.orig
+*.log
