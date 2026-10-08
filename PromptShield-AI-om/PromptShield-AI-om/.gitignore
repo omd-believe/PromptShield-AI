@@ -1,0 +1,134 @@
+# ===========================
+# Java
+# ===========================
+*.class
+*.log
+*.ctxt
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# ===========================
+# Maven
+# ===========================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===========================
+# Gradle
+# ===========================
+.gradle/
+build/
+out/
+
+# ===========================
+# IntelliJ IDEA
+# ===========================
+.idea/
+*.iml
+
+# ===========================
+# Eclipse
+# ===========================
+.project
+.classpath
+.settings/
+.factorypath
+
+# ===========================
+# VS Code
+# ===========================
+.vscode/
+
+# ===========================
+# OS Files
+# ===========================
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log
+
+# ===========================
+# Environment Files
+# ===========================
+.env
+.env.*
+!.env.example
+
+# ===========================
+# Application Secrets
+# ===========================
+application-local.yml
+application-local.yaml
+application-local.properties
+
+# ===========================
+# Temporary Files
+# ===========================
+*.tmp
+*.swp
+*.swo
+
+# ===========================
+# Coverage & Reports
+# ===========================
+coverage/
+jacoco.exec
+
+# ===========================
+# Docker
+# ===========================
+docker-compose.override.yml
+
+# ===========================
+# Node (Future React App)
+# ===========================
+node_modules/
+
+# ===========================
+# Python (Future AI Service)
+# ===========================
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env.python
+
+# ===========================
+# Model Files
+# ===========================
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# ===========================
+# Dataset Files (Large)
+# ===========================
+datasets/raw/
+datasets/cache/
+
+# Keep dataset structure
+!datasets/.gitkeep
+
+# ===========================
+# Uploads
+# ===========================
+uploads/
+
+# ===========================
+# Generated Files
+# ===========================
+generated/
+
+# ===========================
+# Misc
+# ===========================
+*.bak
+*.orig
