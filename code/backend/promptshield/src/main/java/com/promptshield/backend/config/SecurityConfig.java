@@ -6,6 +6,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 public class SecurityConfig {
 
@@ -14,6 +16,7 @@ public class SecurityConfig {
             throws Exception {
 
         http
+                .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
@@ -33,6 +36,9 @@ public class SecurityConfig {
                                 "/api/v1/register",
                                 "/api/v1/login"
                         ).permitAll()
+
+                        // Health check — public so Render / Docker can probe without a JWT
+                        .requestMatchers("/api/v1/health").permitAll()
 
                         // Everything else requires JWT
                         .anyRequest().authenticated()

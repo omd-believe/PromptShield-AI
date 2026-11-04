@@ -3,7 +3,9 @@ package com.promptshield.backend.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    // Excluded from equals/hashCode/toString: Prompt points back to User, which
+    // would otherwise recurse forever (and force-load the lazy collection).
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "user",
             cascade = CascadeType.ALL,
             orphanRemoval = true)

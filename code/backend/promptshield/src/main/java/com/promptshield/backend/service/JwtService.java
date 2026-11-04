@@ -1,6 +1,7 @@
 package com.promptshield.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -14,19 +15,21 @@ public class JwtService {
 
     private final JwtEncoder jwtEncoder;
 
-    public String generateToken(String email){
+    @Value("${jwt.expiration:86400000}")
+    private long jwtExpirationMs;
+
+    public String generateToken(String email) {
         Instant now = Instant.now();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("promptshield")
                 .subject(email)
                 .issuedAt(now)
-                .expiresAt(now.plusSeconds(86400))
+                .expiresAt(now.plusMillis(jwtExpirationMs))
                 .build();
 
         return jwtEncoder
                 .encode(JwtEncoderParameters.from(claims))
                 .getTokenValue();
     }
-
 }

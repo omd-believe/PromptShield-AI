@@ -1,4 +1,17 @@
+# PromptShield AI Service — .gitignore
 .venv/
 __pycache__/
 *.pyc
+*.pyo
 .env
+.pytest_cache/
+htmlcov/
+.coverage
+*.egg-info/
+# Model weights — these are large binary files; use HuggingFace Hub to download
+trained_models/
+# Datasets should be committed only if small and essential; large datasets use DVC
+# datasets/
+# HuggingFace cache
+.cache/
+huggingface/

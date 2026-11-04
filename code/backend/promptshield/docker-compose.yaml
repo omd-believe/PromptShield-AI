@@ -6,11 +6,20 @@ services:
     environment:
       POSTGRES_DB: promptshield_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD environment variable is required}
     ports:
       - "5433:5432"
     volumes:
       - promptshield-postgres-data:/var/lib/postgresql/data
+
+  ai-service:
+    build:
+      context: ../../ai-service
+      dockerfile: Dockerfile
+    image: promptshield-ai-service:latest
+    container_name: promptshield-ai-service
+    ports:
+      - "127.0.0.1:8000:8000"
 
   backend:
     build:
@@ -20,12 +29,14 @@ services:
     container_name: promptshield-backend
     depends_on:
       - postgres
+      - ai-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/promptshield_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD environment variable is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET environment variable is required — generate with: openssl rand -base64 32}
       JWT_EXPIRATION: 86400000
+      AI_SERVICE_URL: http://ai-service:8000
     ports:
       - "8080:8080"
 

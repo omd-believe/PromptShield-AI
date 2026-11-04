@@ -1,0 +1,139 @@
+# PromptShield-AI — Docker Compose (local development)
+# Copy docker/.env.example to docker/.env and fill in real secrets before running.
+#
+# Usage:
+#   cd docker && docker compose up --build
+#
+# Note: The AI service (FastAPI) is NOT included here for local deployment —
+# it runs directly on the host with GPU access. See DEPLOYMENT.md for details.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: promptshield-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: promptshield_db
+      POSTGRES_USER: postgres
+      # REQUIRED: set POSTGRES_PASSWORD in .env — no insecure default in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d promptshield_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai-service:
+    build:
+      context: ../ai-service
+      dockerfile: Dockerfile
+    image: promptshield-ai-service:latest
+    container_name: promptshield-ai-service
+    restart: unless-stopped
+    environment:
+      # ── Service-to-service authentication ────────────────────────────────────
+      # Generate: openssl rand -hex 32
+      AI_SERVICE_API_KEY: ${AI_SERVICE_API_KEY:?AI_SERVICE_API_KEY must be set in .env}
+
+      # ── Compression engine ─────────────────────────────────────────────────
+      # 'auto': try LLMLingua-2 first, fall back to FLAN-T5, then deterministic
+      # 'llmlingua': LLMLingua-2 only (+ deterministic fallback)
+      # 'flan-t5': FLAN-T5 only (+ deterministic fallback)
+      # 'deterministic': skip all ML model stages
+      COMPRESSION_ENGINE: ${COMPRESSION_ENGINE:-auto}
+
+      # ── LLMLingua-2 ────────────────────────────────────────────────────────
+      LLMLINGUA_ENABLED: ${LLMLINGUA_ENABLED:-true}
+      LLMLINGUA_MODEL_ID: ${LLMLINGUA_MODEL_ID:-microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank}
+      # Allow weights to be downloaded from Hugging Face Hub on first run
+      LLMLINGUA_USE_ONLINE_DOWNLOAD: ${LLMLINGUA_USE_ONLINE_DOWNLOAD:-true}
+      LLMLINGUA_DEVICE: ${LLMLINGUA_DEVICE:-auto}
+      LLMLINGUA_RATE: ${LLMLINGUA_RATE:-0.75}
+      LLMLINGUA_TARGET_TOKEN: ${LLMLINGUA_TARGET_TOKEN:--1}
+      LLMLINGUA_TIMEOUT_SECONDS: ${LLMLINGUA_TIMEOUT_SECONDS:-30.0}
+      LLMLINGUA_MAX_CONCURRENT_REQUESTS: ${LLMLINGUA_MAX_CONCURRENT_REQUESTS:-1}
+      LLMLINGUA_FORCE_RESERVE_DIGIT: ${LLMLINGUA_FORCE_RESERVE_DIGIT:-true}
+      LLMLINGUA_DROP_CONSECUTIVE: ${LLMLINGUA_DROP_CONSECUTIVE:-true}
+      LLMLINGUA_MIN_SEMANTIC_SCORE: ${LLMLINGUA_MIN_SEMANTIC_SCORE:-70.0}
+      LLMLINGUA_MAX_FORCE_TOKENS: ${LLMLINGUA_MAX_FORCE_TOKENS:-100}
+
+      # ── FLAN-T5 (optional) ─────────────────────────────────────────────────
+      FLAN_T5_ENABLED: ${FLAN_T5_ENABLED:-false}
+      FLAN_T5_MODEL_ID: ${FLAN_T5_MODEL_ID:-google/flan-t5-small}
+      FLAN_T5_USE_ONLINE_DOWNLOAD: ${FLAN_T5_USE_ONLINE_DOWNLOAD:-true}
+      FLAN_T5_DEVICE: ${FLAN_T5_DEVICE:-auto}
+      FLAN_T5_TIMEOUT_SECONDS: ${FLAN_T5_TIMEOUT_SECONDS:-30.0}
+
+      # ── Shared cache directory inside the container ────────────────────────
+      HF_HOME: /home/promptshield/.cache/huggingface
+      TRANSFORMERS_CACHE: /home/promptshield/.cache/huggingface/hub
+    volumes:
+      # Persist downloaded model weights across container restarts
+      - huggingface-cache:/home/promptshield/.cache/huggingface
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  backend:
+    build:
+      context: ../backend/promptshield
+      dockerfile: Dockerfile
+    image: promptshield-backend:latest
+    container_name: promptshield-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/promptshield_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      # REQUIRED: set POSTGRES_PASSWORD in .env
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      # REQUIRED: set JWT_SECRET in .env (minimum 32 chars, randomly generated)
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      AI_SERVICE_URL: http://ai-service:8000
+      # Shared secret for backend→AI service authentication
+      AI_SERVICE_API_KEY: ${AI_SERVICE_API_KEY:?AI_SERVICE_API_KEY must be set in .env}
+      # Set to match your frontend URL in Docker dev (or leave as default for localhost)
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        # In Docker dev, frontend calls the backend through the host machine port
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api/v1}
+    image: promptshield-frontend:latest
+    container_name: promptshield-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres-data:
+  # Named volume for HuggingFace model cache — survives container rebuilds
+  huggingface-cache:
