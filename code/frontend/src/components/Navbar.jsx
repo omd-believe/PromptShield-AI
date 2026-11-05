@@ -20,6 +20,17 @@ export default function Navbar() {
 
   useEffect(() => setMenuOpen(false), [pathname]);
 
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+
   const navLinks = [
     { label: 'Capabilities', href: '/#features' },
     { label: 'Pipeline', href: '/#how-it-works' },

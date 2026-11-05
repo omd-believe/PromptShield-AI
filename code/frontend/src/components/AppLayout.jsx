@@ -22,6 +22,18 @@ export default function AppLayout({ children, activeRoute }) {
     setDrawerOpen(false);
   }, [location.pathname]);
 
+  // Lock body scroll when drawer is open on mobile
+  useEffect(() => {
+    if (drawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [drawerOpen]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');

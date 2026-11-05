@@ -912,6 +912,19 @@
   }
 }
 
+@media (max-width: 960px) {
+  .opt-comparison-container {
+    grid-template-columns: 1fr;
+  }
+  .opt-compare-divider {
+    transform: rotate(90deg);
+    padding: 8px 0;
+  }
+  .opt-targets-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .pipeline-steps {
     display: flex;
@@ -931,18 +944,12 @@
     width: 20px;
     flex: none;
   }
-  .opt-comparison-container {
-    grid-template-columns: 1fr;
+  .opt-textarea {
+    font-size: 16px !important;
   }
-  .opt-compare-divider {
-    transform: rotate(90deg);
-    padding: 8px 0;
-  }
-  .opt-targets-grid {
-    grid-template-columns: 1fr;
-  }
-  .opt-metrics-banner {
-    grid-template-columns: repeat(2, 1fr);
+  .opt-field__input,
+  .opt-field__textarea {
+    font-size: 16px !important;
   }
   .diagnostics-grid {
     grid-template-columns: 1fr;
@@ -952,42 +959,49 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
+  .opt-page-header__title {
+    font-size: 1.5rem;
+  }
+  .opt-page-header__sub {
+    font-size: 0.85rem;
+  }
   .opt-actions {
     width: 100%;
     flex-direction: column;
     gap: 10px;
+    order: 1;
+  }
+  .opt-hints {
+    width: 100%;
+    order: 2;
+    margin-top: 4px;
   }
   .opt-action-btn {
     width: 100%;
     justify-content: center;
-    min-height: 44px;
+    min-height: 46px;
+    font-size: 0.92rem;
   }
   .opt-input-footer {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
+    padding: 12px 14px;
   }
-  .privacy-analysis-card__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .privacy-review-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-  .privacy-review-actions button {
-    width: 100%;
-    justify-content: center;
-    min-height: 44px;
-  }
-}
-
-@media (max-width: 480px) {
   .opt-metrics-banner {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
     padding: 14px;
-    gap: 12px;
+  }
+  .opt-metric-block:last-child {
+    grid-column: span 2;
+  }
+  .opt-metric-block__label {
+    font-size: 0.68rem;
+  }
+  .opt-metric-block__val {
+    font-size: 1.25rem;
   }
   .opt-tab-bar {
     gap: 6px;
@@ -999,28 +1013,74 @@
     display: none;
   }
   .opt-tab-btn {
-    padding: 7px 12px;
-    font-size: 0.8rem;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    min-height: 42px;
     flex-shrink: 0;
   }
+  .opt-copy-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .opt-compare-pane__head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
   .privacy-metrics-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .privacy-analysis-card {
+    padding: 16px;
+  }
+  .privacy-analysis-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .privacy-risk-badge {
+    align-self: flex-start;
+  }
+  .privacy-review-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  .privacy-review-actions button {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
   .privacy-entity-row__summary {
     padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .privacy-entity-row__detail {
     grid-template-columns: 1fr;
     padding: 10px 12px;
+    gap: 10px;
   }
   .diag-card {
     padding: 12px 14px;
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 380px) {
+  .opt-metrics-banner {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+  .opt-metric-block:last-child {
+    grid-column: auto;
+  }
+  .privacy-metrics-grid {
+    grid-template-columns: 1fr;
+  }
   .opt-input-header {
     padding: 10px 12px 8px;
+    flex-wrap: wrap;
   }
   .opt-textarea {
     padding: 12px 14px;

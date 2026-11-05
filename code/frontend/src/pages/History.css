@@ -744,6 +744,13 @@
     flex-direction: column;
     align-items: stretch;
   }
+  .history-search-wrap {
+    min-width: 0;
+    width: 100%;
+  }
+  .history-search-input {
+    font-size: 16px !important;
+  }
   .history-filter-tabs {
     width: 100%;
     overflow-x: auto;
@@ -760,6 +767,7 @@
     white-space: nowrap;
     justify-content: center;
     padding: 6px 12px;
+    min-height: 38px;
   }
   .history-card {
     padding: 14px;
@@ -773,7 +781,7 @@
     width: 100%;
     justify-content: flex-end;
   }
-  .history-modal-overlay {
+  .modal-backdrop {
     padding: 10px;
   }
   .history-modal {
@@ -786,6 +794,16 @@
   .history-modal__body,
   .history-modal__footer {
     padding: 14px;
+  }
+  .history-modal__footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-modal__footer .btn-secondary,
+  .history-modal__footer .btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
   .history-modal__privacy-grid,
   .history-modal__quality-grid {
