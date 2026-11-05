@@ -463,6 +463,11 @@
 ══════════════════════════════════════════ */
 /* Tablet tier: 601px – 1024px: sidebar transforms to drawer */
 @media (max-width: 1024px) {
+  .app-layout {
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+  }
   .app-sidebar {
     display: none;
   }
