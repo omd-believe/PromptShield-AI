@@ -37,8 +37,11 @@ public class SecurityConfig {
                                 "/api/v1/login"
                         ).permitAll()
 
-                        // Health check — public so Render / Docker can probe without a JWT
-                        .requestMatchers("/api/v1/health").permitAll()
+                        // Health checks — public so Render / Docker / UptimeRobot can probe without a JWT
+                        .requestMatchers(
+                                "/api/v1/health",
+                                "/actuator/health"
+                        ).permitAll()
 
                         // Everything else requires JWT
                         .anyRequest().authenticated()
