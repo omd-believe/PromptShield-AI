@@ -20,6 +20,7 @@ import java.time.Duration;
  *   <li>Connection timeout applied at socket level for fast failure on unreachable networks</li>
  *   <li>Response timeout tuned for deep learning GPU inference (e.g. Flan-T5, LLMLingua-2)</li>
  *   <li>Sensible connection pooling with proactive idle eviction to avoid stale tunnel/proxy sockets</li>
+ *   <li>Configurable TLS handshake timeout (default 15 s) to survive Tailscale Funnel cold starts</li>
  *   <li>Standard TLS certificate verification preserved intact</li>
  * </ul>
  */
@@ -32,15 +33,19 @@ public class WebClientConfig {
     @Value("${ai.service.api-key:}")
     private String aiServiceApiKey;
 
-    @Value("${ai.service.timeout-seconds:90}")
+    @Value("${ai.service.timeout-seconds:45}")
     private int timeoutSeconds;
 
-    @Value("${ai.service.connect-timeout-seconds:15}")
+    @Value("${ai.service.connect-timeout-seconds:10}")
     private int connectTimeoutSeconds;
+
+    /** Configurable TLS handshake timeout (seconds). Defaults to 15 s. */
+    @Value("${ai.service.ssl-handshake-timeout-seconds:15}")
+    private int sslHandshakeTimeoutSeconds;
 
     @Bean
     public WebClient webClient() {
-        // Connection pool tuned for external/tunneled microservices (e.g., Tailscale Funnel / Cloudflare Tunnel)
+        // Connection pool tuned for external/tunneled microservices (e.g., Tailscale Funnel).
         // Stale connections are proactively evicted before remote gateways close them.
         ConnectionProvider connectionProvider = ConnectionProvider.builder("ai-service-pool")
                 .maxConnections(50)
@@ -54,7 +59,7 @@ public class WebClientConfig {
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutSeconds * 1000)
                 .responseTimeout(Duration.ofSeconds(timeoutSeconds))
                 .secure(ssl -> ssl.sslContext(Http11SslContextSpec.forClient())
-                        .handshakeTimeout(Duration.ofSeconds(30)));
+                        .handshakeTimeout(Duration.ofSeconds(sslHandshakeTimeoutSeconds)));
 
         WebClient.Builder builder = WebClient.builder()
                 .baseUrl(aiServiceBaseUrl)

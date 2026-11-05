@@ -103,6 +103,17 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(AiCircuitBreakerOpenException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ErrorResponse handleAiCircuitBreakerOpenException(AiCircuitBreakerOpenException ex) {
+
+        return new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                ex.getMessage()
+        );
+    }
+
     @ExceptionHandler(AiServiceException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
     public ErrorResponse handleAiServiceException(AiServiceException ex) {

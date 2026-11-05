@@ -11,6 +11,20 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
+    void handleAiCircuitBreakerOpenException_ShouldReturnServiceUnavailable() {
+        AiCircuitBreakerOpenException ex = new AiCircuitBreakerOpenException(
+                "AI optimization is temporarily unavailable (service protection is active). Please try again shortly.");
+        ErrorResponse response = handler.handleAiCircuitBreakerOpenException(ex);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), response.getStatus());
+        assertEquals(
+                "AI optimization is temporarily unavailable (service protection is active). Please try again shortly.",
+                response.getError());
+        assertNotNull(response.getTimestamp());
+    }
+
+    @Test
     void handleAiServiceException_ShouldReturnBadGateway() {
         AiServiceException ex = new AiServiceException("AI microservice unreachable");
         ErrorResponse response = handler.handleAiServiceException(ex);
