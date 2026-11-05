@@ -191,99 +191,119 @@ After getting the frontend URL (e.g. `https://promptshield.vercel.app`):
 
 ---
 
-## Section 6 — AI Service on Fedora + Cloudflare Tunnel
+## Section 6 — AI Service on Fedora + Cloudflare Tunnel (Persistent systemd Services)
 
-### 6.1 Set up the AI service
+### 6.1 Architecture & Persistence Overview
+
+The AI service and Cloudflare Tunnel run as persistent systemd user services on Fedora.
+- Path Symlink: `~/promptshield-ai` points to the AI service directory to keep systemd paths clean.
+- Systemd User Services:
+  - `promptshield-ai.service`: Manages the FastAPI Uvicorn process, loads environment variables via `EnvironmentFile`, and utilizes local GPU CUDA inference.
+  - `promptshield-tunnel.service`: Manages the Cloudflare Tunnel forwarding to `http://127.0.0.1:8000`, started automatically after `promptshield-ai.service`.
+- Session Lingering: Enabled via `loginctl enable-linger omd24` so services continue running headless across lock screens, logouts, and system reboots.
+
+### 6.2 Service Control Commands
+
+**FastAPI AI Service:**
+```bash
+# Check status
+systemctl --user status promptshield-ai.service
+
+# View recent logs
+journalctl --user -u promptshield-ai.service -n 50 --no-pager
+
+# Follow logs in real time
+journalctl --user -u promptshield-ai.service -f
+
+# Restart / Stop / Start
+systemctl --user restart promptshield-ai.service
+systemctl --user stop promptshield-ai.service
+systemctl --user start promptshield-ai.service
+```
+
+**Cloudflare Tunnel:**
+```bash
+# Check status
+systemctl --user status promptshield-tunnel.service
+
+# Extract current Quick Tunnel public URL
+journalctl --user -u promptshield-tunnel.service -n 50 --no-pager | grep "trycloudflare.com"
+
+# Restart tunnel (note: creates a new Quick Tunnel URL)
+systemctl --user restart promptshield-tunnel.service
+```
+
+### 6.3 Local Verification (Without Exposing Secrets)
 
 ```bash
-cd ai-service
-source .venv/bin/activate   # activate existing venv (or create: python -m venv .venv)
+# 1. Verify health check (unauthenticated)
+curl -s http://127.0.0.1:8000/health
 
-# Set required environment variables
-export AI_SERVICE_API_KEY=<same key as Render backend>
-export LLMLINGUA_ENABLED=true
-export LLMLINGUA_DEVICE=auto
-export LLMLINGUA_USE_ONLINE_DOWNLOAD=true  # first run only; set false after cache
+# 2. Verify unauthorized requests are rejected (HTTP 401)
+curl -s -o /dev/null -w "Missing key: HTTP %{http_code}\n" -X POST http://127.0.0.1:8000/optimize -H "Content-Type: application/json" -d '{"prompt": "test"}'
+curl -s -o /dev/null -w "Invalid key: HTTP %{http_code}\n" -X POST http://127.0.0.1:8000/optimize -H "Content-Type: application/json" -H "X-API-Key: invalid-key" -d '{"prompt": "test"}'
 
-# Start the AI service
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+# 3. Verify authorized GPU inference (safe in-memory key test)
+python3 - << 'EOF'
+import requests
+
+env_vars = {}
+with open("/home/omd24/promptshield-ai/.env") as f:
+    for line in f:
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            env_vars[k.strip()] = v.strip().strip("'\"")
+
+res = requests.post(
+    "http://127.0.0.1:8000/optimize",
+    json={"prompt": "Hello test prompt with email test@example.com", "compression_engine": "llmlingua"},
+    headers={"Content-Type": "application/json", "X-API-Key": env_vars.get("AI_SERVICE_API_KEY", "")},
+    timeout=60
+)
+print(f"Status: {res.status_code}, Anonymized: {res.json().get('optimized_prompt')}")
+EOF
 ```
 
-Verify locally:
-```bash
-curl http://localhost:8000/health
-# {"status":"healthy"}
-```
+### 6.4 Update Render Backend with Tunnel URL
 
-### 6.2 Test API key authentication
-
-```bash
-# Should return 401 (no key)
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/optimize \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "test"}'
-
-# Should work (correct key)
-curl -s http://localhost:8000/health
-# (health endpoint has no auth requirement)
-```
-
-### 6.3 Start Cloudflare Quick Tunnel
-
-```bash
-# Install cloudflared (if not installed)
-sudo dnf install cloudflared
-# Or: wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.rpm
-# sudo rpm -ivh cloudflared-linux-amd64.rpm
-
-# Start the tunnel (keep this terminal open)
-cloudflared tunnel --url http://localhost:8000
-```
-
-The output will show a URL like:
-```
-2026-11-04T10:00:00Z INF +----------------------------+
-2026-11-04T10:00:00Z INF |  Your quick Tunnel has been created! Visit it at    |
-2026-11-04T10:00:00Z INF |  https://abc-def-ghi-123.trycloudflare.com          |
-```
-
-### 6.4 Update Render backend with tunnel URL
-
-1. Render → promptshield-backend → Environment
-2. Set `AI_SERVICE_URL = https://abc-def-ghi-123.trycloudflare.com`
-3. Render auto-redeploys (< 2 minutes)
-
-### 6.5 Verify end-to-end
-
-```bash
-# Test backend can reach AI service
-curl https://promptshield-backend.onrender.com/api/v1/health
-```
+1. Obtain the active tunnel URL:
+   ```bash
+   journalctl --user -u promptshield-tunnel.service -n 50 --no-pager | grep "trycloudflare.com"
+   ```
+2. In the Render Dashboard:
+   - Navigate to **Dashboard** → **promptshield-backend** → **Environment**.
+   - Set or update:
+     - `AI_SERVICE_URL` = `https://<active-subdomain>.trycloudflare.com` (do not add a trailing slash).
+     - `AI_SERVICE_API_KEY` = `<your-ai-service-api-key>` (must match the key in `.env`).
+3. Save changes. Render will redeploy the backend in 1–2 minutes.
 
 ---
 
-## Section 7 — When the Tunnel URL Changes
+## Section 7 — Tunnel Maintenance & Upgrading to a Named Tunnel
 
-The Quick Tunnel URL changes **every time you restart cloudflared**. To update:
+### When the Quick Tunnel Restarts
+Quick Tunnels are ephemeral: whenever `promptshield-tunnel.service` restarts or your laptop reconnects, a new `*.trycloudflare.com` URL is generated.
+When this happens:
+1. Run `journalctl --user -u promptshield-tunnel.service -n 30 | grep trycloudflare.com` to get the new URL.
+2. Update `AI_SERVICE_URL` in the Render dashboard.
 
+### Upgrading to a Stable Named Tunnel (Zero URL Changes)
+When you are ready for a permanent URL:
 ```bash
-# 1. Start cloudflared again (get new URL from output)
-cloudflared tunnel --url http://localhost:8000
-
-# 2. Update Render immediately
-# Go to: Render → promptshield-backend → Environment
-# Set: AI_SERVICE_URL = https://new-url.trycloudflare.com
-# Render will redeploy in < 2 min
-```
-
-**Optional: persistent tunnel (named tunnel)**
-```bash
-# One-time setup for a stable URL
+# 1. Authenticate with your Cloudflare account
 cloudflared tunnel login
+
+# 2. Create a named tunnel
 cloudflared tunnel create promptshield-ai
+
+# 3. Route DNS to your custom domain
 cloudflared tunnel route dns promptshield-ai ai.yourdomain.com
-cloudflared tunnel run --url http://localhost:8000 promptshield-ai
-# This URL never changes — no need to update Render
+
+# 4. Update ~/.config/systemd/user/promptshield-tunnel.service ExecStart to:
+# ExecStart=/usr/local/bin/cloudflared tunnel run --url http://127.0.0.1:8000 promptshield-ai
+systemctl --user daemon-reload
+systemctl --user restart promptshield-tunnel.service
 ```
 
 ---

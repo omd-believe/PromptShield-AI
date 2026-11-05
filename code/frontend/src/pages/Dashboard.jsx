@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-  LayoutDashboard, Zap, Shield, Clock, TrendingUp,
-  ChevronRight, Copy, CheckCheck, ArrowRight, LogOut,
-  History, AlertCircle, Activity, Loader2
+  Zap, Shield, Clock, TrendingUp,
+  ChevronRight, Copy, CheckCheck, ArrowRight,
+  AlertCircle, Activity, Loader2, Sparkles, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePwa } from '../contexts/PwaContext';
 import { getDashboardStats, getHistory, optimizePrompt } from '../services/promptService';
 import './Dashboard.css';
 
@@ -22,7 +23,6 @@ const timeAgo = (isoString) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
-/* Mock data shown while backend is not connected */
 const MOCK_STATS = {
   totalPrompts: 0,
   avgTokenReduction: 0,
@@ -36,8 +36,8 @@ const MOCK_STATS = {
 const MOCK_HISTORY = { content: [], totalElements: 0 };
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isOnline } = usePwa();
 
   /* ─── State ─── */
   const [stats, setStats] = useState(null);
@@ -58,7 +58,7 @@ export default function Dashboard() {
       const data = await getDashboardStats();
       setStats(data);
     } catch {
-      setStats(MOCK_STATS); // fallback when backend not connected
+      setStats(MOCK_STATS);
     } finally {
       setStatsLoading(false);
     }
@@ -68,7 +68,7 @@ export default function Dashboard() {
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
-      const data = await getHistory(5); // newest 5 only
+      const data = await getHistory(5);
       setHistory(data.content || []);
     } catch {
       setHistory(MOCK_HISTORY.content);
@@ -85,21 +85,20 @@ export default function Dashboard() {
   /* ─── Quick Optimize ─── */
   const handleQuickOptimize = async (e) => {
     e.preventDefault();
-    if (!quickPrompt.trim()) return;
+    if (!quickPrompt.trim() || !isOnline) return;
     setOptimizing(true);
     setQuickResult(null);
     setQuickError('');
     try {
       const result = await optimizePrompt(quickPrompt.trim());
       setQuickResult(result);
-      // Refresh stats + history after successful optimization
       loadStats();
       loadHistory();
     } catch (err) {
       setQuickError(
         err.response?.data?.error ||
         err.response?.data?.message ||
-        'Could not connect to the AI service. Make sure the backend is running.'
+        'Could not connect to the AI service. Ensure backend services are running.'
       );
     } finally {
       setOptimizing(false);
@@ -108,21 +107,14 @@ export default function Dashboard() {
 
   /* ─── Copy optimized text ─── */
   const handleCopy = () => {
-    // Backend field: optimizedPrompt
     if (!quickResult?.optimizedPrompt) return;
     navigator.clipboard.writeText(quickResult.optimizedPrompt).then(
       () => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       },
-      () => setQuickError('Could not copy to the clipboard. Please copy the text manually.')
+      () => setQuickError('Could not copy to clipboard. Please copy manually.')
     );
-  };
-
-  /* ─── Logout ─── */
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
   };
 
   /* ─── Stat Cards config ─── */
@@ -130,11 +122,11 @@ export default function Dashboard() {
     {
       id: 'total',
       icon: Activity,
-      label: 'Total Prompts Analyzed',
+      label: 'Prompts Analyzed',
       value: statsLoading ? null : (stats?.totalPrompts ?? 0),
       unit: '',
-      color: '#6c63ff',
-      desc: 'Since you joined',
+      color: 'var(--accent)',
+      desc: 'All-time volume',
     },
     {
       id: 'reduction',
@@ -142,345 +134,383 @@ export default function Dashboard() {
       label: 'Avg Token Reduction',
       value: statsLoading ? null : fmt(stats?.avgTokenReduction, 1),
       unit: '%',
-      color: '#00d4aa',
-      desc: 'Tokens saved per prompt',
+      color: 'var(--accent-secondary)',
+      desc: 'Per shielded prompt',
     },
     {
       id: 'flags',
       icon: Shield,
-      label: 'Sensitive Entities Masked',
+      label: 'Entities Masked',
       value: statsLoading ? null : (stats?.totalEntitiesDetected ?? 0),
       unit: '',
-      color: '#ff4d6d',
-      desc: 'Across all prompts',
+      color: 'var(--danger)',
+      desc: 'PII threats neutralized',
     },
     {
       id: 'tokens-saved',
       icon: Zap,
-      label: 'Total Tokens Saved',
+      label: 'Tokens Saved',
       value: statsLoading ? null : (stats?.totalTokensSaved ?? 0),
       unit: '',
-      color: '#f59e0b',
-      desc: 'Approximate word count saved',
+      color: 'var(--warning)',
+      desc: 'Cumulative efficiency gain',
     },
   ];
 
   return (
-    <div className="dashboard">
-      {/* ══════════════════════════════
-          SIDEBAR
-      ══════════════════════════════ */}
-      <aside className="dash-sidebar">
-        <div className="dash-sidebar__top">
-          {/* Logo */}
-          <Link to="/" className="dash-sidebar__brand">
-            <div className="dash-sidebar__brand-icon">
-              <Shield size={18} />
-            </div>
-            <span>Prompt<span className="gradient-text">Shield</span></span>
-          </Link>
-
-          {/* Nav */}
-          <nav className="dash-nav">
-            <Link to="/dashboard" className="dash-nav__item dash-nav__item--active">
-              <LayoutDashboard size={18} />
-              <span>Dashboard</span>
-            </Link>
-            <Link to="/optimize" className="dash-nav__item">
-              <Zap size={18} />
-              <span>Optimizer</span>
-            </Link>
-            <Link to="/history" className="dash-nav__item">
-              <History size={18} />
-              <span>History</span>
-            </Link>
-          </nav>
+    <div className="dash-container">
+      {/* ── Header ── */}
+      <header className="dash-header">
+        <div className="dash-header__welcome">
+          <div className="dash-header__badge">
+            <Sparkles size={13} style={{ color: 'var(--accent)' }} />
+            <span>Cybersecurity AI Dashboard</span>
+          </div>
+          <h1 className="dash-header__title">
+            Good {getGreeting()},{' '}
+            <span className="gradient-text">{user?.name?.split(' ')[0] || 'there'}</span> 👋
+          </h1>
+          <p className="dash-header__subtitle">
+            System overview and real-time privacy &amp; prompt optimization metrics.
+          </p>
         </div>
 
-        {/* User + Logout */}
-        <div className="dash-sidebar__bottom">
-          <div className="dash-user">
-            <div className="dash-user__avatar">
-              {user?.name?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="dash-user__info">
-              <p className="dash-user__name">{user?.name || 'User'}</p>
-              <p className="dash-user__email">{user?.email || ''}</p>
-            </div>
-          </div>
-          <button className="dash-logout-btn" onClick={handleLogout}>
-            <LogOut size={16} />
-            <span>Logout</span>
+        <div className="dash-header__actions">
+          <button
+            className="btn-secondary"
+            onClick={() => { loadStats(); loadHistory(); }}
+            title="Refresh Dashboard Stats"
+          >
+            <RefreshCw size={14} className={statsLoading || historyLoading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
           </button>
-        </div>
-      </aside>
-
-      {/* ══════════════════════════════
-          MAIN CONTENT
-      ══════════════════════════════ */}
-      <main className="dash-main">
-        {/* ── Header ── */}
-        <header className="dash-header">
-          <div>
-            <h1 className="dash-header__title">
-              Good {getGreeting()},{' '}
-              <span className="gradient-text">{user?.name?.split(' ')[0] || 'there'}</span> 👋
-            </h1>
-            <p className="dash-header__subtitle">
-              Here's an overview of your prompt activity.
-            </p>
-          </div>
           <Link to="/optimize" className="btn-primary dash-header__cta">
             <Zap size={16} />
-            New Optimization
+            <span>New Optimization</span>
           </Link>
-        </header>
+        </div>
+      </header>
 
-        {/* ══════════
-            STAT CARDS
-        ══════════ */}
-        <section className="dash-stats">
-          {statCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div key={card.id} className="stat-card">
-                <div
-                  className="stat-card__icon-wrap"
-                  style={{ background: `${card.color}15`, border: `1px solid ${card.color}25` }}
-                >
-                  <Icon size={20} style={{ color: card.color }} />
-                </div>
-                <div className="stat-card__body">
-                  <p className="stat-card__label">{card.label}</p>
-                  <div className="stat-card__value-row">
-                    {statsLoading ? (
-                      <div className="stat-card__skeleton" />
-                    ) : (
-                      <span className="stat-card__value" style={{ color: card.color }}>
-                        {card.value}{card.unit}
-                      </span>
-                    )}
-                  </div>
-                  <p className="stat-card__desc">{card.desc}</p>
-                </div>
+      {/* ══════════
+          STAT CARDS
+      ══════════ */}
+      <section className="dash-stats" aria-label="Key Performance Indicators">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.id} className="stat-card">
+              <div
+                className="stat-card__icon-wrap"
+                style={{ background: `color-mix(in srgb, ${card.color} 15%, transparent)`, borderColor: `color-mix(in srgb, ${card.color} 25%, transparent)` }}
+              >
+                <Icon size={20} style={{ color: card.color }} />
               </div>
-            );
-          })}
-        </section>
-
-        <section className="dash-analytics">
-          <div className="dash-analytics__panel">
-            <div className="dash-section__header">
-              <h2 className="dash-section__title">
-                <Shield size={18} className="dash-section__icon" style={{ color: '#ff4d6d' }} />
-                Privacy Analytics
-              </h2>
-              <span className="dash-analytics__caption">Sanitized totals only</span>
-            </div>
-            {statsLoading ? (
-              <div className="dash-analytics__loading" />
-            ) : Object.keys(stats?.privacyCategories || {}).length === 0 ? (
-              <p className="dash-analytics__empty">No sensitive entities detected yet.</p>
-            ) : (
-              <div className="dash-analytics__rows">
-                {Object.entries(stats.privacyCategories)
-                  .sort(([, a], [, b]) => b - a)
-                  .slice(0, 6)
-                  .map(([label, count]) => (
-                    <div className="dash-analytics__row" key={label}>
-                      <span>{label}</span>
-                      <div className="dash-analytics__bar">
-                        <span
-                          style={{
-                            width: `${Math.min(100, (count / stats.totalEntitiesDetected) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                      <strong>{count}</strong>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-          <div className="dash-analytics__panel">
-            <div className="dash-section__header">
-              <h2 className="dash-section__title">
-                <TrendingUp size={18} className="dash-section__icon" style={{ color: '#00d4aa' }} />
-                Quality Snapshot
-              </h2>
-            </div>
-            <div className="dash-quality__metric">
-              <span>Semantic checks accepted</span>
-              <strong>
-                {statsLoading || stats?.semanticAcceptanceRate == null
-                  ? '—'
-                  : `${fmt(stats.semanticAcceptanceRate, 1)}%`}
-              </strong>
-            </div>
-            <div className="dash-quality__risk">
-              {Object.entries(stats?.riskLevels || {}).map(([level, count]) => (
-                <span key={level} className={`dash-risk dash-risk--${level.toLowerCase()}`}>
-                  {level} {count}
-                </span>
-              ))}
-              {!statsLoading && Object.keys(stats?.riskLevels || {}).length === 0 && (
-                <span className="dash-analytics__empty">No risk data yet.</span>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════
-            QUICK OPTIMIZER
-        ══════════════════════════════ */}
-        <section className="dash-section">
-          <div className="dash-section__header">
-            <h2 className="dash-section__title">
-              <Zap size={18} className="dash-section__icon" style={{ color: '#6c63ff' }} />
-              Quick Optimizer
-            </h2>
-            <Link to="/optimize" className="dash-section__link">
-              Full Optimizer <ChevronRight size={14} />
-            </Link>
-          </div>
-
-          <div className="quick-optimizer">
-            <form onSubmit={handleQuickOptimize} className="quick-optimizer__form">
-              <textarea
-                className="quick-optimizer__input"
-                placeholder="Paste your prompt here and hit Analyze — the AI pipeline will detect sensitive data, compress, correct grammar, and return an optimized version…"
-                value={quickPrompt}
-                onChange={(e) => {
-                  setQuickPrompt(e.target.value);
-                  if (quickError) setQuickError('');
-                  if (quickResult) setQuickResult(null);
-                }}
-                rows={4}
-                disabled={optimizing}
-              />
-              <div className="quick-optimizer__footer">
-                <span className="quick-optimizer__char-count">
-                  {quickPrompt.length} chars
-                </span>
-                <button
-                  type="submit"
-                  className="btn-primary quick-optimizer__submit"
-                  disabled={optimizing || !quickPrompt.trim()}
-                >
-                  {optimizing ? (
-                    <>
-                      <Loader2 size={15} className="spin-icon" />
-                      Analyzing…
-                    </>
+              <div className="stat-card__body">
+                <p className="stat-card__label">{card.label}</p>
+                <div className="stat-card__value-row">
+                  {statsLoading ? (
+                    <div className="stat-card__skeleton" />
                   ) : (
-                    <>
-                      <Zap size={15} />
-                      Analyze
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* ── Quick Error ── */}
-            {quickError && (
-              <div className="quick-optimizer__error">
-                <AlertCircle size={15} />
-                {quickError}
-              </div>
-            )}
-
-            {/* ── Quick Result ── */}
-            {quickResult && (
-              <div className="quick-result">
-                {/* Optimized text — backend field: optimizedPrompt */}
-                <div className="quick-result__text-wrap">
-                  <div className="quick-result__text-header">
-                    <span className="quick-result__text-label">
-                      <span className="dot dot--green" />
-                      Optimized Prompt
+                    <span className="stat-card__value" style={{ color: card.color }}>
+                      {card.value}{card.unit}
                     </span>
-                    <button
-                      className="quick-result__copy-btn"
-                      onClick={handleCopy}
-                      title="Copy optimized prompt"
-                    >
-                      {copied ? <CheckCheck size={15} /> : <Copy size={15} />}
-                      {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="quick-result__text">{quickResult.optimizedPrompt}</p>
+                  )}
                 </div>
-
-                <Link to="/optimize" className="quick-result__full-link">
-                  View full analysis <ArrowRight size={13} />
-                </Link>
+                <p className="stat-card__desc">{card.desc}</p>
               </div>
-            )}
-          </div>
-        </section>
+            </div>
+          );
+        })}
+      </section>
 
-        {/* ══════════════════════════════
-            RECENT ACTIVITY
-        ══════════════════════════════ */}
-        <section className="dash-section">
+      {/* ══════════════════════════════
+          ANALYTICS BREAKDOWN
+      ══════════════════════════════ */}
+      <section className="dash-analytics">
+        {/* Privacy Analytics Panel */}
+        <div className="dash-analytics__panel">
           <div className="dash-section__header">
             <h2 className="dash-section__title">
-              <Clock size={18} className="dash-section__icon" style={{ color: '#00d4aa' }} />
-              Recent Activity
+              <Shield size={18} className="dash-section__icon" style={{ color: 'var(--danger)' }} />
+              Privacy Neutralization Breakdown
             </h2>
-            <Link to="/history" className="dash-section__link">
-              View All <ChevronRight size={14} />
-            </Link>
+            <span className="badge badge--neutral">Sensitive PII</span>
           </div>
 
-          <div className="activity-list">
-            {historyLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="activity-skeleton" />
-              ))
-            ) : history.length === 0 ? (
-              <div className="activity-empty">
-                <Zap size={32} className="activity-empty__icon" />
-                <p className="activity-empty__title">No prompts yet</p>
-                <p className="activity-empty__sub">
-                  Use the Quick Optimizer above or the{' '}
-                  <Link to="/optimize" className="auth-link">full optimizer</Link> to get started.
-                </p>
-              </div>
-            ) : (
-              history.map((item, i) => (
-                <div key={item.promptId ?? i} className="activity-item">
-                  <div className="activity-item__left">
-                    <div className="activity-item__index">{i + 1}</div>
-                    <div className="activity-item__content">
-                      {/* Backend fields: originalPrompt / optimizedPrompt */}
-                      <p className="activity-item__original">
-                        {item.originalPrompt?.length > 80
-                          ? item.originalPrompt.slice(0, 80) + '…'
-                          : item.originalPrompt}
-                      </p>
-                      <p className="activity-item__optimized">
-                        {item.optimizedPrompt?.length > 80
-                          ? item.optimizedPrompt.slice(0, 80) + '…'
-                          : item.optimizedPrompt}
-                      </p>
+          {statsLoading ? (
+            <div className="dash-analytics__loading" />
+          ) : Object.keys(stats?.privacyCategories || {}).length === 0 ? (
+            <div className="dash-empty-box">
+              <Shield size={24} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
+              <p>No sensitive entities masked yet. Try optimizing a prompt with personal data!</p>
+            </div>
+          ) : (
+            <div className="dash-analytics__rows">
+              {Object.entries(stats.privacyCategories)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 6)
+                .map(([label, count]) => {
+                  const maxCount = stats.totalEntitiesDetected || count || 1;
+                  const pct = Math.min(100, Math.round((count / maxCount) * 100));
+                  return (
+                    <div className="dash-analytics__row" key={label}>
+                      <span className="dash-analytics__label">{label}</span>
+                      <div className="dash-analytics__bar" role="progressbar" aria-valuenow={pct} aria-valuemin="0" aria-valuemax="100">
+                        <span style={{ width: `${Math.max(4, pct)}%` }} />
+                      </div>
+                      <strong className="dash-analytics__count">{count}</strong>
                     </div>
-                  </div>
-                  <div className="activity-item__right">
-                    <span className="activity-time">{timeAgo(item.createdAt)}</span>
-                  </div>
-                </div>
-              ))
+                  );
+                })}
+            </div>
+          )}
+        </div>
+
+        {/* Quality & Risk Snapshot */}
+        <div className="dash-analytics__panel">
+          <div className="dash-section__header">
+            <h2 className="dash-section__title">
+              <TrendingUp size={18} className="dash-section__icon" style={{ color: 'var(--accent-secondary)' }} />
+              Fidelity &amp; Risk Health
+            </h2>
+            <span className="badge badge--safe">Deterministic AI</span>
+          </div>
+
+          <div className="dash-quality__metric">
+            <div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>Semantic Integrity</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Proportion passing fidelity threshold</div>
+            </div>
+            <strong>
+              {statsLoading || stats?.semanticAcceptanceRate == null
+                ? '—'
+                : `${fmt(stats.semanticAcceptanceRate, 1)}%`}
+            </strong>
+          </div>
+
+          <div className="dash-quality__risk-header">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Detected Risk Distribution:</span>
+          </div>
+
+          <div className="dash-quality__risk">
+            {Object.entries(stats?.riskLevels || {}).map(([level, count]) => {
+              const lvlLower = level.toLowerCase();
+              const badgeClass =
+                lvlLower === 'low' ? 'badge--safe' :
+                lvlLower === 'medium' ? 'badge--warning' : 'badge--danger';
+              return (
+                <span key={level} className={`badge ${badgeClass}`}>
+                  {level}: {count}
+                </span>
+              );
+            })}
+            {!statsLoading && Object.keys(stats?.riskLevels || {}).length === 0 && (
+              <span className="dash-analytics__empty">No risk events evaluated yet.</span>
             )}
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════
+          QUICK OPTIMIZER
+      ══════════════════════════════ */}
+      <section className="dash-section">
+        <div className="dash-section__header">
+          <h2 className="dash-section__title">
+            <Zap size={18} className="dash-section__icon" style={{ color: 'var(--accent)' }} />
+            Quick Optimizer
+          </h2>
+          <Link to="/optimize" className="dash-section__link">
+            <span>Advanced Controls</span>
+            <ChevronRight size={14} />
+          </Link>
+        </div>
+
+        <div className="quick-optimizer">
+          <form onSubmit={handleQuickOptimize} className="quick-optimizer__form">
+            <textarea
+              className="quick-optimizer__input"
+              placeholder="Paste any prompt here to instantly sanitize sensitive PII, strip bloat, and compress tokens…"
+              value={quickPrompt}
+              onChange={(e) => {
+                setQuickPrompt(e.target.value);
+                if (quickError) setQuickError('');
+                if (quickResult) setQuickResult(null);
+              }}
+              rows={4}
+              disabled={optimizing || !isOnline}
+            />
+
+            <div className="quick-optimizer__footer">
+              <div className="quick-optimizer__meta">
+                <span className="quick-optimizer__char-count">
+                  {quickPrompt.length} chars · ~{quickPrompt.trim().split(/\s+/).filter(Boolean).length} words
+                </span>
+                {!isOnline && (
+                  <span className="badge badge--danger" style={{ fontSize: '0.72rem' }}>Offline</span>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="btn-primary quick-optimizer__submit"
+                disabled={optimizing || !quickPrompt.trim() || !isOnline}
+              >
+                {optimizing ? (
+                  <>
+                    <Loader2 size={15} className="spin-icon" />
+                    <span>Analyzing…</span>
+                  </>
+                ) : (
+                  <>
+                    <Shield size={15} />
+                    <span>Shield &amp; Optimize</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Quick Error Banner */}
+          {quickError && (
+            <div className="quick-optimizer__error" role="alert">
+              <AlertCircle size={16} />
+              <span>{quickError}</span>
+            </div>
+          )}
+
+          {/* Quick Result Output */}
+          {quickResult && (
+            <div className="quick-result">
+              <div className="quick-result__metrics-grid">
+                <div className="quick-result__mini-metric">
+                  <span className="quick-result__metric-label">Tokens Saved</span>
+                  <span className="quick-result__metric-val" style={{ color: 'var(--accent-secondary)' }}>
+                    {Math.max(0, (quickResult.originalTokens || 0) - (quickResult.optimizedTokens || 0))}
+                  </span>
+                </div>
+                <div className="quick-result__mini-metric">
+                  <span className="quick-result__metric-label">Token Change</span>
+                  <span className="quick-result__metric-val gradient-text">
+                    {quickResult.reductionPercentage != null ? `${fmt(quickResult.reductionPercentage, 1)}%` : '0%'}
+                  </span>
+                </div>
+                <div className="quick-result__mini-metric">
+                  <span className="quick-result__metric-label">Privacy Risk</span>
+                  <span
+                    className="quick-result__metric-val"
+                    style={{
+                      color: (quickResult.riskScore || 0) > 60 ? 'var(--danger)' :
+                             (quickResult.riskScore || 0) > 25 ? 'var(--warning)' : 'var(--accent-secondary)'
+                    }}
+                  >
+                    {quickResult.riskScore ?? 0}/100 ({quickResult.riskLevel || 'LOW'})
+                  </span>
+                </div>
+                <div className="quick-result__mini-metric">
+                  <span className="quick-result__metric-label">Semantic Match</span>
+                  <span className="quick-result__metric-val" style={{ color: 'var(--accent-secondary)' }}>
+                    {quickResult.semanticSimilarityScore != null ? `${fmt(quickResult.semanticSimilarityScore, 1)}%` : '100%'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="quick-result__text-wrap">
+                <div className="quick-result__text-header">
+                  <span className="quick-result__text-label">
+                    <span className="dot dot--green" />
+                    Optimized Output
+                  </span>
+                  <button
+                    className="quick-result__copy-btn"
+                    onClick={handleCopy}
+                    title="Copy optimized prompt"
+                  >
+                    {copied ? <CheckCheck size={14} /> : <Copy size={14} />}
+                    <span>{copied ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+                <p className="quick-result__text">{quickResult.optimizedPrompt}</p>
+              </div>
+
+              <Link to="/optimize" className="quick-result__full-link">
+                <span>Open in Full Pipeline Studio</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════
+          RECENT ACTIVITY
+      ══════════════════════════════ */}
+      <section className="dash-section">
+        <div className="dash-section__header">
+          <h2 className="dash-section__title">
+            <Clock size={18} className="dash-section__icon" style={{ color: 'var(--accent-secondary)' }} />
+            Recent Prompt Stream
+          </h2>
+          <Link to="/history" className="dash-section__link">
+            <span>View All</span>
+            <ChevronRight size={14} />
+          </Link>
+        </div>
+
+        <div className="activity-list">
+          {historyLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="activity-skeleton" />
+            ))
+          ) : history.length === 0 ? (
+            <div className="activity-empty">
+              <Zap size={36} className="activity-empty__icon" />
+              <p className="activity-empty__title">No activity recorded yet</p>
+              <p className="activity-empty__sub">
+                Shield and optimize your first prompt using the Quick Optimizer above or visit the{' '}
+                <Link to="/optimize" className="gradient-text" style={{ fontWeight: 600 }}>full optimizer</Link>.
+              </p>
+            </div>
+          ) : (
+            history.map((item, i) => (
+              <div key={item.promptId ?? i} className="activity-item">
+                <div className="activity-item__left">
+                  <div className="activity-item__index">{i + 1}</div>
+                  <div className="activity-item__content">
+                    <p className="activity-item__original">
+                      <span className="activity-item__tag-prefix">Orig:</span>
+                      {item.originalPrompt?.length > 90
+                        ? item.originalPrompt.slice(0, 90) + '…'
+                        : item.originalPrompt}
+                    </p>
+                    <p className="activity-item__optimized">
+                      <span className="activity-item__tag-prefix activity-item__tag-prefix--opt">Opt:</span>
+                      {item.optimizedPrompt?.length > 90
+                        ? item.optimizedPrompt.slice(0, 90) + '…'
+                        : item.optimizedPrompt}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="activity-item__right">
+                  {item.sensitiveDataDetected ? (
+                    <span className="badge badge--danger" style={{ fontSize: '0.68rem' }}>
+                      <Shield size={10} /> Masked
+                    </span>
+                  ) : (
+                    <span className="badge badge--safe" style={{ fontSize: '0.68rem' }}>Clean</span>
+                  )}
+                  <span className="activity-time">{timeAgo(item.createdAt)}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 }
 
-/* ─── Greeting helper ─── */
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return 'morning';
