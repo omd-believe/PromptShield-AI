@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Shield, Zap, History as HistoryIcon,
   Search, Copy, CheckCheck,
-  Eye, Calendar, ArrowRight, X, Lock, AlertCircle, RefreshCw, Sparkles, Filter
+  Eye, Calendar, ArrowRight, X, Lock, AlertCircle, RefreshCw, Sparkles
 } from 'lucide-react';
 import { getHistory } from '../services/promptService';
 import './History.css';

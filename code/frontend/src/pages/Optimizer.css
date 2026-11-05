@@ -619,6 +619,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: 100%;
 }
 
 .opt-compare-pane__head {
@@ -646,6 +648,8 @@
   line-height: 1.65;
   color: var(--text-primary);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   flex: 1;
 }
 
@@ -909,6 +913,24 @@
 }
 
 @media (max-width: 768px) {
+  .pipeline-steps {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 12px;
+    padding: 4px 0 8px;
+  }
+  .pipeline-steps::-webkit-scrollbar {
+    display: none;
+  }
+  .pipeline-step {
+    flex-shrink: 0;
+  }
+  .pipeline-step__line {
+    width: 20px;
+    flex: none;
+  }
   .opt-comparison-container {
     grid-template-columns: 1fr;
   }
@@ -930,16 +952,78 @@
   }
 }
 
-@media (max-width: 480px) {
-  .opt-metrics-banner {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 600px) {
   .opt-actions {
     width: 100%;
     flex-direction: column;
+    gap: 10px;
   }
   .opt-action-btn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
+  }
+  .opt-input-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .privacy-analysis-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .privacy-review-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .privacy-review-actions button {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .opt-metrics-banner {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 12px;
+  }
+  .opt-tab-bar {
+    gap: 6px;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .opt-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .opt-tab-btn {
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  .privacy-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .privacy-entity-row__summary {
+    padding: 10px 12px;
+  }
+  .privacy-entity-row__detail {
+    grid-template-columns: 1fr;
+    padding: 10px 12px;
+  }
+  .diag-card {
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .opt-input-header {
+    padding: 10px 12px 8px;
+  }
+  .opt-textarea {
+    padding: 12px 14px;
+    min-height: 120px;
   }
 }

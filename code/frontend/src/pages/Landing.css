@@ -218,6 +218,8 @@
   font-size: 0.9rem;
   line-height: 1.65;
   color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
   margin-bottom: 12px;
 }
 

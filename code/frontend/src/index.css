@@ -140,6 +140,8 @@ button:disabled {
 input, textarea, select {
   font-family: inherit;
   color: inherit;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 img, svg {
@@ -172,7 +174,8 @@ code, kbd, samp, pre {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
@@ -411,6 +414,16 @@ code, kbd, samp, pre {
   z-index: 150;
   box-shadow: var(--shadow-modal);
   animation: slide-up 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .global-update-banner {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
+    left: 12px;
+    right: 12px;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+  }
 }
 
 /* ── Animations ── */

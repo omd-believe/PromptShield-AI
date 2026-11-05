@@ -227,6 +227,7 @@
   margin-left: 260px;
   flex: 1;
   min-width: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -237,6 +238,8 @@
   padding: 32px 36px 64px;
   max-width: 1360px;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   margin: 0 auto;
 }
 
@@ -445,10 +448,11 @@
   }
   .app-content {
     margin-left: 0;
-    padding-bottom: 70px;
+    padding-bottom: 0;
   }
   .app-content__inner {
-    padding: 20px 16px 80px;
+    padding: 20px 16px calc(60px + env(safe-area-inset-bottom, 0px) + 24px);
+    max-width: 100%;
   }
   .app-mobile-header {
     display: flex;
@@ -458,6 +462,54 @@
   }
   .app-drawer-backdrop {
     display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-content__inner {
+    padding: 16px 12px calc(60px + env(safe-area-inset-bottom, 0px) + 20px);
+  }
+  .app-mobile-header {
+    height: 56px;
+    padding: 0 12px;
+  }
+  .app-mobile-header__left {
+    gap: 8px;
+    min-width: 0;
+  }
+  .app-mobile-header__brand {
+    font-size: 0.95rem;
+    min-width: 0;
+  }
+  .app-mobile-header__brand span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .app-mobile-header__right {
+    gap: 6px;
+  }
+  .app-mobile-header__btn {
+    width: 34px;
+    height: 34px;
+    padding: 6px;
+  }
+  .app-mobile-header__avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-content__inner {
+    padding: 14px 10px calc(60px + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+  .app-mobile-header {
+    padding: 0 8px;
+  }
+  .app-mobile-header__brand {
+    font-size: 0.88rem;
   }
 }
 

@@ -184,4 +184,20 @@
   .navbar__actions { display: none; }
   .navbar__mobile-triggers { display: flex; }
   .navbar__mobile { display: flex; }
+  .navbar__inner { gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .navbar { padding: 12px 0; }
+  .navbar__logo { font-size: 1.02rem; gap: 8px; }
+  .navbar__logo-icon { width: 30px; height: 30px; }
+  .navbar__hamburger, .navbar__icon-btn { width: 36px; height: 36px; }
+  .navbar__mobile { padding: 16px 16px 24px; }
+}
+
+@media (max-width: 360px) {
+  .navbar__logo { font-size: 0.94rem; }
+  .navbar__logo-icon { width: 28px; height: 28px; }
+  .navbar__mobile-triggers { gap: 6px; }
+  .navbar__hamburger, .navbar__icon-btn { width: 34px; height: 34px; }
 }

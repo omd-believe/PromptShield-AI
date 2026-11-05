@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Shield, Zap, Brain, Sparkles, Eye, Copy, CheckCheck,
   ArrowRight, AlertCircle, ChevronDown, ChevronUp, RotateCcw,
-  FileText, TrendingDown, Lock, Sliders, Info, WifiOff
+  FileText, TrendingDown, Lock, Sliders, WifiOff
 } from 'lucide-react';
 import { usePwa } from '../contexts/PwaContext';
 import { analyzePrompt, optimizePrompt, recordPrivacyAudit } from '../services/promptService';
@@ -175,7 +175,7 @@ export default function Optimizer() {
   const continueWithSafePrompt = async () => {
     if (!analysisResult || !isOnline) return;
     const originalText = promptText.trim();
-    const approvedPolicy = { ...(readPrivacyPolicy() || {}) };
+    const approvedPolicy = { ...readPrivacyPolicy() };
     if (analysisResult.policyActions) {
       Object.keys(analysisResult.policyActions).forEach(cat => {
         if (analysisResult.policyActions[cat] === 'REQUIRE_CONFIRMATION' || analysisResult.policyActions[cat] === 'BLOCK') {

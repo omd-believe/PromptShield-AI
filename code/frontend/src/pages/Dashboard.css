@@ -627,10 +627,19 @@
   }
   .dash-header {
     flex-direction: column;
+    gap: 16px;
   }
   .dash-header__actions {
     width: 100%;
-    justify-content: flex-start;
+    display: flex;
+    gap: 8px;
+  }
+  .dash-header__actions button,
+  .dash-header__actions a {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 14px;
   }
   .activity-item {
     flex-direction: column;
@@ -640,6 +649,8 @@
   .activity-item__right {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 
@@ -650,8 +661,40 @@
   .quick-optimizer__footer {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
   .quick-optimizer__submit {
     width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .quick-result {
+    padding: 14px;
+  }
+  .dash-analytics__panel {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .quick-result__metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .dash-header__actions {
+    flex-direction: column;
+  }
+  .dash-header__actions button,
+  .dash-header__actions a {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .dash-analytics__row {
+    grid-template-columns: 90px 1fr 32px;
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 14px 16px;
   }
 }

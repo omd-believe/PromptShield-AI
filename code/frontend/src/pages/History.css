@@ -352,6 +352,7 @@
   flex-direction: column;
   gap: 4px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .history-card__label {
@@ -737,6 +738,7 @@
   .history-header__actions .btn-primary {
     flex: 1;
     justify-content: center;
+    min-height: 44px;
   }
   .history-controls {
     flex-direction: column;
@@ -745,29 +747,45 @@
   .history-filter-tabs {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+    padding: 4px;
+  }
+  .history-filter-tabs::-webkit-scrollbar {
+    display: none;
   }
   .history-filter-btn {
-    flex: 1;
+    flex-shrink: 0;
+    white-space: nowrap;
     justify-content: center;
+    padding: 6px 12px;
   }
   .history-card {
-    padding: 16px;
+    padding: 14px;
   }
   .history-card__footer {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
   }
   .history-card__actions {
     width: 100%;
     justify-content: flex-end;
   }
+  .history-modal-overlay {
+    padding: 10px;
+  }
   .history-modal {
-    max-height: 95vh;
+    max-height: 94vh;
+    border-radius: var(--radius-lg);
+    width: 100%;
+    margin: 0;
   }
   .history-modal__header,
   .history-modal__body,
   .history-modal__footer {
-    padding: 16px;
+    padding: 14px;
   }
   .history-modal__privacy-grid,
   .history-modal__quality-grid {
@@ -776,9 +794,17 @@
 }
 
 @media (max-width: 400px) {
+  .history-header__actions {
+    flex-direction: column;
+  }
+  .history-header__actions .btn-secondary,
+  .history-header__actions .btn-primary {
+    width: 100%;
+  }
   .history-card__actions .history-copy-btn,
   .history-card__actions .history-detail-btn {
     flex: 1;
     justify-content: center;
+    min-height: 40px;
   }
 }
