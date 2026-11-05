@@ -826,3 +826,21 @@
     min-height: 40px;
   }
 }
+
+@media (max-width: 360px) {
+  .history-header__title {
+    font-size: 1.35rem;
+  }
+  .history-card {
+    padding: 12px 10px;
+  }
+  .history-filter-btn {
+    padding: 5px 8px;
+    font-size: 0.76rem;
+  }
+  .history-modal__header,
+  .history-modal__body,
+  .history-modal__footer {
+    padding: 12px 10px;
+  }
+}

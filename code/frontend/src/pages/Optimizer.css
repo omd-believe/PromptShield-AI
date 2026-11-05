@@ -1068,9 +1068,16 @@
 }
 
 @media (max-width: 380px) {
+  .opt-page-header__title {
+    font-size: 1.35rem;
+  }
+  .opt-page-header__sub {
+    font-size: 0.8rem;
+  }
   .opt-metrics-banner {
     grid-template-columns: 1fr;
     padding: 12px;
+    gap: 8px;
   }
   .opt-metric-block:last-child {
     grid-column: auto;
@@ -1081,9 +1088,28 @@
   .opt-input-header {
     padding: 10px 12px 8px;
     flex-wrap: wrap;
+    gap: 8px;
   }
   .opt-textarea {
+    padding: 12px 12px;
+    min-height: 110px;
+  }
+  .opt-tab-btn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    min-height: 38px;
+  }
+  .opt-compare-pane__body {
     padding: 12px 14px;
-    min-height: 120px;
+    font-size: 0.88rem;
+  }
+  .opt-compare-pane__head {
+    padding: 10px 12px;
+  }
+  .privacy-analysis-card {
+    padding: 12px 10px;
+  }
+  .pipeline-tracker {
+    padding: 12px 14px;
   }
 }

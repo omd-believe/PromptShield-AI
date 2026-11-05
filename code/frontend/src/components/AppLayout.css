@@ -227,7 +227,9 @@
   margin-left: 260px;
   flex: 1;
   min-width: 0;
-  width: 100%;
+  width: calc(100% - 260px);
+  max-width: calc(100% - 260px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -252,12 +254,16 @@
   top: 0;
   left: 0;
   right: 0;
-  height: calc(58px + env(safe-area-inset-top, 0px));
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  height: calc(56px + env(safe-area-inset-top, 0px));
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
-  padding: env(safe-area-inset-top, 0px) 16px 0;
+  padding: env(safe-area-inset-top, 0px) 14px 0;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   z-index: 50;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -266,34 +272,45 @@
 .app-mobile-header__left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .app-mobile-header__brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1rem;
+  gap: 6px;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.app-mobile-header__brand span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-mobile-header__right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .app-mobile-header__btn {
-  width: 38px;
-  height: 38px;
-  padding: 8px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-light);
+  background: var(--bg-surface);
   flex-shrink: 0;
 }
 
@@ -303,22 +320,22 @@
 }
 
 .app-mobile-header__avatar {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--radius-full);
   background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
 }
 
 /* ══════════════════════════════════════════
-   MOBILE BOTTOM BAR (< 860px)
+   MOBILE BOTTOM BAR (≤ 1024px)
 ══════════════════════════════════════════ */
 .app-mobile-bottom-nav {
   display: none;
@@ -326,8 +343,13 @@
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   height: calc(58px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   z-index: 50;
@@ -340,6 +362,9 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   height: 58px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .app-mobile-bottom-nav__item {
@@ -434,30 +459,21 @@
 }
 
 /* ══════════════════════════════════════════
-   RESPONSIVE BREAKPOINTS
+   RESPONSIVE BREAKPOINTS (320px – 1024px+)
 ══════════════════════════════════════════ */
+/* Tablet tier: 601px – 1024px: sidebar transforms to drawer */
 @media (max-width: 1024px) {
-  .app-sidebar {
-    width: 220px;
-  }
-  .app-content {
-    margin-left: 220px;
-  }
-  .app-content__inner {
-    padding: 24px 20px 48px;
-  }
-}
-
-@media (max-width: 860px) {
   .app-sidebar {
     display: none;
   }
   .app-content {
     margin-left: 0;
+    width: 100%;
+    max-width: 100%;
     padding-bottom: 0;
   }
   .app-content__inner {
-    padding: 20px 16px calc(58px + env(safe-area-inset-bottom, 0px) + 24px);
+    padding: 24px 20px calc(58px + env(safe-area-inset-bottom, 0px) + 28px);
     max-width: 100%;
   }
   .app-mobile-header {
@@ -471,29 +487,15 @@
   }
 }
 
-@media (max-width: 480px) {
+/* Large mobile tier: 431px – 600px */
+@media (max-width: 600px) {
   .app-content__inner {
-    padding: 16px 12px calc(58px + env(safe-area-inset-bottom, 0px) + 20px);
+    padding: 18px 14px calc(58px + env(safe-area-inset-bottom, 0px) + 24px);
   }
   .app-mobile-header {
     height: calc(54px + env(safe-area-inset-top, 0px));
     padding: env(safe-area-inset-top, 0px) 12px 0;
-  }
-  .app-mobile-header__left {
     gap: 8px;
-    min-width: 0;
-  }
-  .app-mobile-header__brand {
-    font-size: 0.95rem;
-    min-width: 0;
-  }
-  .app-mobile-header__brand span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .app-mobile-header__right {
-    gap: 6px;
   }
   .app-mobile-header__btn {
     width: 36px;
@@ -507,15 +509,76 @@
   }
 }
 
-@media (max-width: 360px) {
+/* Standard mobile tier: 376px – 430px */
+@media (max-width: 430px) {
   .app-content__inner {
-    padding: 14px 10px calc(58px + env(safe-area-inset-bottom, 0px) + 16px);
+    padding: 16px 12px calc(58px + env(safe-area-inset-bottom, 0px) + 22px);
   }
   .app-mobile-header {
-    padding: env(safe-area-inset-top, 0px) 8px 0;
+    height: calc(52px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) 10px 0;
+    gap: 6px;
+  }
+  .app-mobile-header__left {
+    gap: 6px;
+    min-width: 0;
   }
   .app-mobile-header__brand {
-    font-size: 0.88rem;
+    font-size: 0.92rem;
+    min-width: 0;
+  }
+  .app-mobile-header__brand span {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .app-mobile-header__right {
+    gap: 5px;
+  }
+  .app-mobile-header__btn {
+    width: 34px;
+    height: 34px;
+    padding: 5px;
+  }
+  .app-mobile-header__avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Small mobile tier: 320px – 360px */
+@media (max-width: 360px) {
+  .app-content__inner {
+    padding: 14px 8px calc(58px + env(safe-area-inset-bottom, 0px) + 20px);
+  }
+  .app-mobile-header {
+    height: calc(50px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) 8px 0;
+    gap: 4px;
+  }
+  .app-mobile-header__left {
+    gap: 4px;
+  }
+  .app-mobile-header__brand {
+    font-size: 0.85rem;
+  }
+  .app-mobile-header__brand span {
+    max-width: 95px;
+  }
+  .app-mobile-header__right {
+    gap: 4px;
+  }
+  .app-mobile-header__btn {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+  .app-mobile-header__avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 0.72rem;
   }
 }
 
